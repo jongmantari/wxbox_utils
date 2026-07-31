@@ -1,0 +1,26 @@
+hrrr:
+
+  bucket:
+    noaa-hrrr-bdp-pds
+
+  product:
+    wrfsfcf
+
+  forecast_hour:
+    0
+
+cycles:
+
+  start:
+    20260723T12Z
+
+  end:
+    20260727T12Z
+
+  interval_hours:
+    2
+
+output:
+
+  root:
+    runs/hrrr_bdp

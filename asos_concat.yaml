@@ -1,0 +1,52 @@
+obs_types:
+
+  - asos
+
+cycles:
+
+  start:
+    20260723T12Z
+
+  end:
+    20260727T12Z
+
+  interval_hours:
+    2
+
+window:
+
+  before_hours:
+    1
+
+  after_hours:
+    1
+
+output:
+
+  root:
+    runs/obsdb
+
+obs:
+
+  asos:
+
+    input_dir:
+      obs/ioda
+
+    file_pattern:
+      iem_asos_obs_%Y%m%dT%H0000Z.nc4
+
+    output_pattern:
+      iem_asos_obs_%Y%m%dT%H0000Z.nc4
+
+    obserror:
+
+      airTemperatureAt2M: 1.0
+
+      dewPointTemperatureAt2M: 1.5
+
+      relativeHumidityAt2M: 0.10
+
+      windEastwardAt10M: 2.0
+
+      windNorthwardAt10M: 2.0

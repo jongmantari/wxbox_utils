@@ -1,0 +1,42 @@
+experiment:
+
+  name:
+    tempest_c417
+
+cycles:
+
+  root:
+    runs/hrrr_bdp
+
+grid:
+
+  name:
+    C417
+
+  akbk:
+    Data/inputs/lam_akbk/INPUT/akbk65.nc
+
+  grid_file:
+    Data/inputs/lam_c417/INPUT/C417_grid.tile7.nc
+
+  template_dir:
+    Data/inputs/lam_c417/bkg
+
+output:
+
+  root:
+    runs/c417
+
+templates:
+
+  core:
+    20201215.000000.rrfs_C417.fv_core.res.tile1.nc
+
+  tracer:
+    20201215.000000.rrfs_C417.fv_tracer.res.tile1.nc
+
+  sfcw:
+    20201215.000000.rrfs_C417.fv_srf_wnd.res.tile1.nc
+
+  sfcd:
+    20201215.000000.rrfs_C417.sfc_data.nc

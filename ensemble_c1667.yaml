@@ -1,0 +1,63 @@
+experiment:
+
+  name:
+    tempest_c1667
+
+cycles:
+
+  root:
+    runs/c1667
+
+background:
+
+  directory:
+    fv3_restart
+
+ensemble:
+
+  directory:
+    ensemble
+
+  members:
+
+    mem01: -5.0
+    mem02: -3.0
+    mem03:  0.0
+    mem04:  3.0
+    mem05:  5.0
+
+files:
+
+  copy:
+
+    - hrrr.fv_core.res.tile1.nc
+    - hrrr.fv_tracer.res.tile1.nc
+    - hrrr.fv_srf_wnd.res.tile1.nc
+    - hrrr.sfc_data.nc
+
+perturbations:
+
+  - mode: balanced_tq
+
+    temperature_file:
+      hrrr.fv_core.res.tile1.nc
+
+    temperature_variable:
+      T
+
+    tracer_file:
+      hrrr.fv_tracer.res.tile1.nc
+
+    tracer_variable:
+      sphum
+
+    levels: 5
+
+    decay_scale: 2.0
+
+    sigma_i: 50
+    sigma_j: 50
+
+    q_per_kelvin: 0.05
+
+    random_center: true

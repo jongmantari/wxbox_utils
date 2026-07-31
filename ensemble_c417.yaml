@@ -1,0 +1,63 @@
+experiment:
+
+  name:
+    tempest_c417
+
+cycles:
+
+  root:
+    runs/c417
+
+background:
+
+  directory:
+    fv3_restart
+
+ensemble:
+
+  directory:
+    ensemble
+
+  members:
+
+    mem01: -4.0
+    mem02: -2.0
+    mem03:  0.0
+    mem04:  2.0
+    mem05:  4.0
+
+files:
+
+  copy:
+
+    - hrrr.fv_core.res.tile1.nc
+    - hrrr.fv_tracer.res.tile1.nc
+    - hrrr.fv_srf_wnd.res.tile1.nc
+    - hrrr.sfc_data.nc
+
+perturbations:
+
+  - mode: balanced_tq
+
+    temperature_file:
+      hrrr.fv_core.res.tile1.nc
+
+    temperature_variable:
+      T
+
+    tracer_file:
+      hrrr.fv_tracer.res.tile1.nc
+
+    tracer_variable:
+      sphum
+
+    levels: 2
+
+    decay_scale: 3.0
+
+    sigma_i: 25
+    sigma_j: 25
+
+    q_per_kelvin: 0.001
+
+    random_center: true
