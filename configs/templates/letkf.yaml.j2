@@ -1,0 +1,215 @@
+geometry:
+
+  fms initialization:
+
+    namelist filename:
+      {{ fms_namelist }}
+
+    field table filename:
+      {{ field_table }}
+
+  akbk:
+    {{ akbk_file }}
+
+  namelist filename:
+    {{ fv3_namelist }}
+
+
+time window:
+
+  begin:
+    {{ window_begin }}
+
+  length:
+    PT2H
+
+
+background:
+
+  members from template:
+
+    template:
+
+      datetime:
+        {{ analysis_time }}
+
+      filetype:
+        fms restart
+
+      state variables:
+
+        - air_temperature
+        - air_pressure_thickness
+        - water_vapor_mixing_ratio_wrt_moist_air
+        - geopotential_height_times_gravity_at_surface
+
+      field io names:
+
+        air_temperature: T
+
+        air_pressure_thickness: DELP
+
+        water_vapor_mixing_ratio_wrt_moist_air: sphum
+
+        geopotential_height_times_gravity_at_surface: phis
+
+      datapath:
+        {{ cycle_dir }}/ensemble/mem%mem%/
+
+      filename_core:
+        hrrr.fv_core.res.tile1.nc
+
+      filename_trcr:
+        hrrr.fv_tracer.res.tile1.nc
+
+      filename_cplr:
+        {{ coupler_file }}
+
+    pattern:
+      "%mem%"
+
+    nmembers:
+      {{ nmembers }}
+
+    zero padding:
+      2
+
+
+observations:
+
+  observers:
+
+    - obs space:
+
+        name:
+          {{ obs_name }}
+
+        distribution:
+
+          name:
+            {{ distribution_name }}
+
+          halo size:
+            {{ halo_size }}
+
+        obsdatain:
+
+          engine:
+
+            type:
+              H5File
+
+            obsfile:
+              {{ obsfile }}
+
+        obsdataout:
+
+          engine:
+
+            type:
+              H5File
+
+            obsfile:
+              {{ diagfile }}
+
+        simulated variables:
+{% for var in simulated_variables %}
+          - {{ var }}
+{% endfor %}
+
+        obs perturbations seed:
+          {{ perturbation_seed }}
+
+      obs operator:
+
+        name:
+          {{ obs_operator }}
+
+        correction scheme to use:
+          {{ obs_correction }}
+
+      obs error:
+
+        covariance model:
+          {{ covariance_model }}
+
+        obs perturbations amplitude:
+          {{ perturbation_amplitude }}
+
+      diagnostics:
+{% for var in diagnostics %}
+        - {{ var }}
+{% endfor %}
+
+      obs localizations:
+
+        - localization method:
+            Horizontal Gaspari-Cohn
+
+          lengthscale:
+            {{ localization_lengthscale }}
+
+          max nobs:
+            {{ max_nobs }}
+
+
+driver:
+
+  save posterior ensemble: true
+
+  save posterior mean increment: true
+
+
+local ensemble DA:
+
+  solver:
+    {{ solver }}
+
+  inflation:
+
+    rtps:
+      {{ rtps }}
+
+    rtpp:
+      {{ rtpp }}
+
+    mult:
+      {{ mult }}
+
+
+output:
+
+  filetype:
+    fms restart
+
+  field io names:
+
+    air_temperature: T
+
+    air_pressure_thickness: DELP
+
+    water_vapor_mixing_ratio_wrt_moist_air: sphum
+
+    geopotential_height_times_gravity_at_surface: phis
+
+  datapath:
+    {{ cycle_dir }}/letkf/analysis/mem%{member}%/
+
+
+output increment:
+
+  filetype:
+    fms restart
+
+  field io names:
+
+    air_temperature: T
+
+    air_pressure_thickness: DELP
+
+    water_vapor_mixing_ratio_wrt_moist_air: sphum
+
+    geopotential_height_times_gravity_at_surface: phis
+
+  datapath:
+    {{ cycle_dir }}/letkf/increment/

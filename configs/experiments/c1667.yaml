@@ -1,0 +1,191 @@
+experiment: c1667
+
+experiment_dir:
+  runs/c1667
+
+resolution: c1667
+
+obsdb_dir:
+  runs/obsdb/asos
+
+nmembers: 5
+
+mpi:
+
+  ranks: 12
+
+paths:
+
+  fms_namelist:
+    Data/fv3files/fmsmpp.nml
+
+  field_table:
+    Data/fv3files/field_table_lam_rrfs
+
+  akbk_file:
+    Data/inputs/lam_akbk/INPUT/akbk65.nc
+
+  fv3_namelist:
+    Data/fv3files/input_lam_c1667.nml
+
+cycling:
+
+  mode: range
+
+  # discover
+  # range
+  # explicit
+
+  start: 20260723T12Z
+
+  end: 20260727T00Z
+
+  frequency_hours: 2
+
+  cycles:
+
+    - 20260723T12Z
+
+letkf:
+
+  solver:
+    Stochastic LETKF
+
+  inflation:
+
+    rtps: 0.9
+
+    rtpp: 0.72
+
+    mult: 1.2
+
+  localization:
+
+    lengthscale: 100000.0
+
+    max_nobs: 200
+
+observations:
+
+  observers:
+
+    - name:
+        asos
+
+      operator:
+        SfcCorrected
+
+      correction:
+        WRFDA
+
+      simulated_variables:
+
+        - airTemperatureAt2M
+
+      diagnostics:
+
+        - airTemperatureAt2M
+
+      distribution:
+
+        name:
+          Halo
+
+        halo_size:
+          100000.0
+
+      error:
+
+        covariance_model:
+          diagonal
+
+        perturbation_amplitude:
+          1.0
+
+        perturbation_seed:
+          1
+
+output:
+
+  log_template:
+    letkf_{cycle}.log
+
+  diag_template:
+    diag_{obs_filename}
+
+post:
+
+  enabled: true
+
+  variable:
+    T
+
+  level:
+    64
+
+  grid_file:
+    Data/inputs/lam_c1667/INPUT/C1667_grid.tile7.nc
+
+  diagnostics:
+
+    obs_variable:
+      airTemperatureAt2M
+
+    qc_group:
+      EffectiveQC0
+
+  density:
+
+    bandwidth:
+      1.0
+
+    points:
+      200
+
+  png:
+
+    dpi:
+      150
+
+  outputs:
+
+    cycle_pdf:
+      cycle_report_{cycle}.pdf
+
+    cycle_json:
+      cycle_stats.json
+
+    experiment_pdf:
+      experiment_summary.pdf
+
+  movies:
+
+    enabled:
+      true
+
+    fps:
+      2
+
+
+summary:
+
+  write_csv:
+    true
+
+  write_pdf:
+    true
+
+  write_density:
+    true
+
+  write_timeseries:
+    true
+
+  title:
+    LETKF Surface2M Diagnostics
+
+  author:
+    wxbox_stack
+
+  include_cycle_reports:
+    true
