@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "wxbox-utils"
 version = "0.1.0"
 
-description = "WxBox utilities for HRRR, FV3, JEDI LETKF and diagnostics"
+description = "WxBox utilities for HRRR, FV3 grid and restart generation, JEDI LETKF cycling, diagnostics, and visualization"
 
 readme = "README.md"
 
@@ -30,14 +30,20 @@ include = ["wxbox_utils*"]
 
 [project.scripts]
 
+# LETKF
 wxbox-letkf = "wxbox_utils.drivers.letkf_driver:main"
 
+# Diagnostics / Post Processing
 wxbox-plot = "wxbox_utils.drivers.plot_driver:main"
-
 wxbox-density = "wxbox_utils.post.experiment_density:main"
-
 wxbox-movie = "wxbox_utils.post.movie_builder:main"
 
+# Ensemble
 wxbox-gen-ens = "wxbox_utils.ensemble.gen_ens:main"
 
+# Observation Database
 wxbox-build-obsdb = "wxbox_utils.obs.build_obsdb_cycles:main"
+
+# ESG / FV3 Grid Utilities
+wxbox-create-grid = "wxbox_utils.grid.create_esg_grid:main"
+wxbox-create-mosaic = "wxbox_utils.grid.create_mosaic:main"
