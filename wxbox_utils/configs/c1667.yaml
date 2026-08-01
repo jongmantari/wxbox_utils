@@ -1,0 +1,56 @@
+grid:
+  name: C1667
+
+  #
+  # NEW
+  #
+  source_grid:
+    Data/inputs/lam_rrfs/INPUT/C403_grid.tile7.halo3.nc
+
+  target_lon: -117.885
+  target_lat: 34.125
+
+  idim: 65
+  jdim: 73
+
+  delx: 0.027
+  dely: 0.027
+
+  halo: 3
+
+  output:
+    grid_file: Data/inputs/lam_c1667/INPUT/C1667_grid.tile7.nc
+
+  mosaic:
+    template: Data/inputs/lam_rrfs/INPUT/C403_mosaic.halo3.nc
+    output: Data/inputs/lam_c1667/INPUT/C1667_mosaic_rrfsstyle.nc
+
+background:
+
+  src_dir: Data/inputs/lam_rrfs/bkg
+  dst_dir: Data/inputs/lam_c1667/bkg
+
+  files:
+
+    - src: 20201215.000000.rrfs_C403.fv_core.res.tile1.nc
+      dst: 20201215.000000.rrfs_C1667.fv_core.res.tile1.nc
+
+    - src: 20201215.000000.rrfs_C403.fv_tracer.res.tile1.nc
+      dst: 20201215.000000.rrfs_C1667.fv_tracer.res.tile1.nc
+
+    - src: 20201215.000000.rrfs_C403.fv_srf_wnd.res.tile1.nc
+      dst: 20201215.000000.rrfs_C1667.fv_srf_wnd.res.tile1.nc
+
+    - src: 20201215.000000.rrfs_C403.sfc_data.nc
+      dst: 20201215.000000.rrfs_C1667.sfc_data.nc
+
+coupler:
+
+  src:
+    Data/inputs/lam_rrfs/bkg/20201215.000000.rrfs_C403.coupler.res
+
+  dst:
+    Data/inputs/lam_c1667/bkg/20201215.000000.rrfs_C1667.coupler.res
+
+interpolation:
+  method: linear

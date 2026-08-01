@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wxbox-utils"
+version = "0.1.0"
+
+description = "WxBox utilities for HRRR, FV3, JEDI LETKF and diagnostics"
+
+readme = "README.md"
+
+requires-python = ">=3.10"
+
+dependencies = [
+    "numpy",
+    "scipy",
+    "pandas",
+    "xarray",
+    "netCDF4",
+    "pyyaml",
+    "jinja2",
+    "matplotlib",
+    "cartopy"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["wxbox_utils*"]
+
+[project.scripts]
+
+wxbox-letkf = "wxbox_utils.drivers.letkf_driver:main"
+
+wxbox-plot = "wxbox_utils.drivers.plot_driver:main"
+
+wxbox-density = "wxbox_utils.post.experiment_density:main"
+
+wxbox-movie = "wxbox_utils.post.movie_builder:main"
+
+wxbox-gen-ens = "wxbox_utils.ensemble.gen_ens:main"
+
+wxbox-build-obsdb = "wxbox_utils.obs.build_obsdb_cycles:main"
