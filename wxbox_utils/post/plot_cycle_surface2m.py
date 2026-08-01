@@ -24,12 +24,12 @@ from scipy.ndimage import zoom
 
 from matplotlib.backends.backend_pdf import PdfPages
 
-from cycle_stats import (
+from wxbox_utils.post.cycle_stats import (
     compute_cycle_statistics,
     write_cycle_statistics,
 )
 
-from cycle_plot import (
+from wxbox_utils.post.cycle_plot import (
     plot_background,
     plot_analysis,
     plot_increment,

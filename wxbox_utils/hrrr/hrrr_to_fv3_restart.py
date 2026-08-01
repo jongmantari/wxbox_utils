@@ -7,9 +7,9 @@ import xarray as xr
 
 from pathlib import Path
 
-from hrrr_reader import HRRRReader
-from hrrr_horizontal_sample import HRRRSampler
-from hrrr_vertical import FV3VerticalGrid
+from wxbox_utils.hrrr.hrrr_reader import HRRRReader
+from wxbox_utils.hrrr.hrrr_horizontal_sample import HRRRSampler
+from wxbox_utils.hrrr.hrrr_vertical import FV3VerticalGrid
 
 
 class HRRRToFV3Restart:

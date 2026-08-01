@@ -42,11 +42,11 @@ sys.path.insert(
     str(PROJECT_ROOT)
 )
 
-from post.summary_plots import (
+from wxbox_utils.post.summary_plots import (
     generate_summary_plots,
 )
 
-from post.movie_builder import (
+from wxbox_utils.post.movie_builder import (
     build_standard_movies,
 )
 

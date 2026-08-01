@@ -13,15 +13,23 @@ readme = "README.md"
 requires-python = ">=3.10"
 
 dependencies = [
-    "numpy",
-    "scipy",
-    "pandas",
-    "xarray",
-    "netCDF4",
-    "pyyaml",
-    "jinja2",
-    "matplotlib",
-    "cartopy"
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "pandas>=2.0",
+
+    "xarray>=2023.1",
+    "netCDF4>=1.6",
+
+    "PyYAML>=6.0",
+    "Jinja2>=3.1",
+
+    "matplotlib>=3.7",
+    "cartopy>=0.22",
+
+    "boto3>=1.34",
+    "botocore>=1.34",
+
+    "cfgrib>=0.9.10"
 ]
 
 [tool.setuptools.packages.find]
@@ -33,7 +41,7 @@ include = ["wxbox_utils*"]
 # LETKF
 wxbox-letkf = "wxbox_utils.drivers.letkf_driver:main"
 
-# Diagnostics / Post Processing
+# Post Processing
 wxbox-plot = "wxbox_utils.drivers.plot_driver:main"
 wxbox-density = "wxbox_utils.post.experiment_density:main"
 wxbox-movie = "wxbox_utils.post.movie_builder:main"
@@ -44,6 +52,6 @@ wxbox-gen-ens = "wxbox_utils.ensemble.gen_ens:main"
 # Observation Database
 wxbox-build-obsdb = "wxbox_utils.obs.build_obsdb_cycles:main"
 
-# ESG / FV3 Grid Utilities
+# Grid Utilities
 wxbox-create-grid = "wxbox_utils.grid.create_esg_grid:main"
 wxbox-create-mosaic = "wxbox_utils.grid.create_mosaic:main"
