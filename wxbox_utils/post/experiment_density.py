@@ -330,7 +330,19 @@ def build_density_plot(
 # Main
 # =====================================================
 
-def main(config_file):
+def main():
+
+    import argparse
+
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "config"
+    )
+
+    args = parser.parse_args()
+
+    config_file = args.config
 
     cfg = load_yaml(
         config_file
@@ -360,20 +372,14 @@ def main(config_file):
     )
 
     build_density_plot(
-
         ombg,
         oman,
-
         outfile,
-
         bandwidth=
-        cfg["post"]
-        ["density"]
+        cfg["post"]["density"]
         ["bandwidth"],
-
         points=
-        cfg["post"]
-        ["density"]
+        cfg["post"]["density"]
         ["points"],
     )
 
@@ -381,7 +387,6 @@ def main(config_file):
     print(
         f"[DONE] {outfile}"
     )
-
 
 if __name__ == "__main__":
 

@@ -403,9 +403,18 @@ def render_cycle(cfg, cycle):
         ["observers"][0]
     )
 
+    #===========================
+    template_dir = (
+        Path(__file__)
+        .resolve()
+        .parents[1]
+        / "configs"
+        / "templates"
+    )
+
     env = Environment(
         loader=FileSystemLoader(
-            "configs/templates"
+            str(template_dir)
         ),
         trim_blocks=True,
         lstrip_blocks=True,
@@ -413,7 +422,8 @@ def render_cycle(cfg, cycle):
 
     template = env.get_template(
         "letkf.yaml.j2"
-    )
+    )    
+    #===========================
 
     rendered = template.render(
 
@@ -633,7 +643,7 @@ def run_cycle(
     yaml_file = (
         letkf_dir
         / "letkf.yaml"
-    )
+    ).resolve()
 
     logfile = (
         letkf_dir
@@ -684,9 +694,13 @@ def run_cycle(
             cfg["mpi"]["ranks"]
         ),
 
-        str(executable),
+        str(
+            executable.resolve()
+        ),
 
-        str(yaml_file),
+        str(
+            yaml_file.resolve()
+        ),
     ]
 
     print()
@@ -709,7 +723,6 @@ def run_cycle(
 
         subprocess.run(
             cmd,
-            cwd=project_root,
             stdout=log,
             stderr=subprocess.STDOUT,
             check=True,

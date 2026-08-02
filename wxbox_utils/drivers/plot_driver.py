@@ -398,9 +398,18 @@ def render_cycle(
         exist_ok=True,
     )
 
+    #==========================
+    template_dir = (
+        Path(__file__)
+        .resolve()
+        .parents[1]
+        / "configs"
+        / "templates"
+    )
+
     env = Environment(
         loader=FileSystemLoader(
-            "configs/templates"
+            str(template_dir)
         ),
         trim_blocks=True,
         lstrip_blocks=True,
@@ -408,7 +417,8 @@ def render_cycle(
 
     template = env.get_template(
         "post_surface2m.yaml.j2"
-    )
+    )    
+    #==========================
 
     #==========================
     rendered = template.render(

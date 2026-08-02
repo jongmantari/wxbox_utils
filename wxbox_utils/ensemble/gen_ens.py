@@ -9,6 +9,16 @@ import numpy as np
 import netCDF4 as nc
 
 # =====================================================
+# YAML
+# =====================================================
+
+def load_yaml(filename):
+
+    with open(filename, "r") as f:
+
+        return yaml.safe_load(f)
+
+# =====================================================
 # Balanced T-q perturbation
 # =====================================================
 
@@ -253,394 +263,408 @@ def apply_centered_gaussian_blob(
 
     return field, cx, cy
 
-
-# =====================================================
-# YAML
-# =====================================================
-
-if len(sys.argv) > 1:
-
-    yaml_file = sys.argv[1]
-
-else:
-
-    yaml_file = "ensemble_c1667.yaml"
-
-with open(
-    yaml_file,
-    "r"
-) as f:
-
-    cfg = yaml.safe_load(f)
-
 # =====================================================
 # CONFIG
 # =====================================================
+def generate_ensembles(cfg):
 
-cycles_root = (
-    cfg["cycles"]["root"]
-)
-
-background_subdir = (
-    cfg["background"]["directory"]
-)
-
-ensemble_subdir = (
-    cfg["ensemble"]["directory"]
-)
-
-members = (
-    cfg["ensemble"]["members"]
-)
-
-copy_files = (
-    cfg["files"]["copy"]
-)
-
-perturbations = (
-    cfg["perturbations"]
-)
-
-# =====================================================
-# DISCOVER CYCLES
-# =====================================================
-
-cycles = []
-
-for d in sorted(
-    os.listdir(cycles_root)
-):
-
-    cycle_path = os.path.join(
-        cycles_root,
-        d
+    cycles_root = (
+        cfg["cycles"]["root"]
     )
 
-    if (
-        os.path.isdir(cycle_path)
-        and
-        os.path.isdir(
-            os.path.join(
-                cycle_path,
-                background_subdir
-            )
-        )
+    background_subdir = (
+        cfg["background"]["directory"]
+    )
+
+    ensemble_subdir = (
+        cfg["ensemble"]["directory"]
+    )
+
+    members = (
+        cfg["ensemble"]["members"]
+    )
+
+    copy_files = (
+        cfg["files"]["copy"]
+    )
+
+    perturbations = (
+        cfg["perturbations"]
+    )
+
+    # =====================================================
+    # DISCOVER CYCLES
+    # =====================================================
+
+    cycles = []
+
+    for d in sorted(
+        os.listdir(cycles_root)
     ):
 
-        cycles.append(d)
+        cycle_path = os.path.join(
+            cycles_root,
+            d
+        )
 
-print()
-print("=" * 70)
-print("Creating Synthetic Ensembles")
-print("=" * 70)
+        if (
+            os.path.isdir(cycle_path)
+            and
+            os.path.isdir(
+                os.path.join(
+                    cycle_path,
+                    background_subdir
+                )
+            )
+        ):
 
-print()
-print(
-    f"Cycles discovered: "
-    f"{len(cycles)}"
-)
-
-# =====================================================
-# PROCESS CYCLES
-# =====================================================
-
-for cycle in cycles:
+            cycles.append(d)
 
     print()
     print("=" * 70)
-    print(
-        f"Cycle: {cycle}"
-    )
+    print("Creating Synthetic Ensembles")
     print("=" * 70)
 
-    cycle_dir = os.path.join(
-        cycles_root,
-        cycle
+    print()
+
+    print(
+        f"Cycles discovered: "
+        f"{len(cycles)}"
     )
 
-    bkg_dir = os.path.join(
-        cycle_dir,
-        background_subdir
-    )
+    # =====================================================
+    # PROCESS CYCLES
+    # =====================================================
 
-    ens_root = os.path.join(
-        cycle_dir,
-        ensemble_subdir
-    )
+    for cycle in cycles:
 
-    os.makedirs(
-        ens_root,
-        exist_ok=True
-    )
+        print()
+        print("=" * 70)
+        print(
+            f"Cycle: {cycle}"
+        )
+        print("=" * 70)
 
-    # --------------------------------------------
-    # Members
-    # --------------------------------------------
-
-    for mem, delta in members.items():
-
-        memdir = os.path.join(
-            ens_root,
-            mem
+        cycle_dir = os.path.join(
+            cycles_root,
+            cycle
         )
 
-        if os.path.exists(memdir):
+        bkg_dir = os.path.join(
+            cycle_dir,
+            background_subdir
+        )
 
-            shutil.rmtree(memdir)
+        ens_root = os.path.join(
+            cycle_dir,
+            ensemble_subdir
+        )
 
-        os.makedirs(memdir)
+        os.makedirs(
+            ens_root,
+            exist_ok=True
+        )
 
-        #
-        # Copy restart package
-        #
-        for fname in copy_files:
+        # --------------------------------------------
+        # Members
+        # --------------------------------------------
 
-            src = os.path.join(
-                bkg_dir,
-                fname
+        for mem, delta in members.items():
+
+            memdir = os.path.join(
+                ens_root,
+                mem
             )
 
-            dst = os.path.join(
-                memdir,
-                fname
-            )
+            if os.path.exists(memdir):
 
-            shutil.copy2(
-                src,
-                dst
-            )
+                shutil.rmtree(memdir)
 
-        #
-        # Always copy coupler file
-        #
-        for fname in os.listdir(
-            bkg_dir
-        ):
+            os.makedirs(memdir)
 
-            if fname.endswith(
-                ".coupler.res"
-            ):
+            #
+            # Copy restart package
+            #
+            for fname in copy_files:
+
+                src = os.path.join(
+                    bkg_dir,
+                    fname
+                )
+
+                dst = os.path.join(
+                    memdir,
+                    fname
+                )
 
                 shutil.copy2(
-                    os.path.join(
-                        bkg_dir,
-                        fname
-                    ),
-                    os.path.join(
-                        memdir,
-                        fname
+                    src,
+                    dst
+                )
+
+            #
+            # Always copy coupler file
+            #
+            for fname in os.listdir(
+                bkg_dir
+            ):
+
+                if fname.endswith(
+                    ".coupler.res"
+                ):
+
+                    shutil.copy2(
+
+                        os.path.join(
+                            bkg_dir,
+                            fname
+                        ),
+
+                        os.path.join(
+                            memdir,
+                            fname
+                        )
                     )
-                )
-        
-        print()
-        print(
-            f"{mem} "
-            f"delta={delta:+.2f}"
-        )
 
-        # ------------------------------------
-        # Apply perturbations
-        # ------------------------------------
+            print()
+            print(
+                f"{mem} "
+                f"delta={delta:+.2f}"
+            )
 
-        for pert in perturbations:
+            # ------------------------------------
+            # Apply perturbations
+            # ------------------------------------
 
-            mode = pert["mode"]
+            for pert in perturbations:
 
-            # --------------------------------
-            # Balanced T-q perturbation
-            # --------------------------------
+                mode = pert["mode"]
 
-            if mode == "balanced_tq":
+                # --------------------------------
+                # Balanced T-q perturbation
+                # --------------------------------
 
-                core_file = os.path.join(
-                    memdir,
-                    pert["temperature_file"]
-                )
+                if mode == "balanced_tq":
 
-                tracer_file = os.path.join(
-                    memdir,
-                    pert["tracer_file"]
-                )
+                    core_file = os.path.join(
+                        memdir,
+                        pert["temperature_file"]
+                    )
 
-                core = nc.Dataset(
-                    core_file,
-                    "r+"
-                )
+                    tracer_file = os.path.join(
+                        memdir,
+                        pert["tracer_file"]
+                    )
 
-                tracer = nc.Dataset(
-                    tracer_file,
-                    "r+"
-                )
+                    core = nc.Dataset(
+                        core_file,
+                        "r+"
+                    )
 
-                T = core[
-                    pert[
-                        "temperature_variable"
-                    ]
-                ][:]
+                    tracer = nc.Dataset(
+                        tracer_file,
+                        "r+"
+                    )
 
-                q = tracer[
-                    pert[
-                        "tracer_variable"
-                    ]
-                ][:]
+                    T = core[
+                        pert[
+                            "temperature_variable"
+                        ]
+                    ][:]
 
-                T, q, cx, cy = (
-                    apply_balanced_tq_blob(
+                    q = tracer[
+                        pert[
+                            "tracer_variable"
+                        ]
+                    ][:]
 
-                        T=T,
+                    T, q, cx, cy = (
+                        apply_balanced_tq_blob(
 
-                        q=q,
+                            T=T,
 
-                        amplitude=delta,
+                            q=q,
 
-                        levels=int(
-                            pert["levels"]
-                        ),
+                            amplitude=delta,
 
-                        decay_scale=float(
-                            pert.get(
-                                "decay_scale",
-                                2.0
-                            )
-                        ),
+                            levels=int(
+                                pert["levels"]
+                            ),
 
-                        sigma_i=float(
-                            pert["sigma_i"]
-                        ),
+                            decay_scale=float(
+                                pert.get(
+                                    "decay_scale",
+                                    2.0
+                                )
+                            ),
 
-                        sigma_j=float(
-                            pert["sigma_j"]
-                        ),
+                            sigma_i=float(
+                                pert["sigma_i"]
+                            ),
 
-                        q_per_kelvin=float(
-                            pert.get(
-                                "q_per_kelvin",
-                                0.05
-                            )
-                        ),
+                            sigma_j=float(
+                                pert["sigma_j"]
+                            ),
 
-                        random_center=bool(
-                            pert.get(
-                                "random_center",
-                                False
+                            q_per_kelvin=float(
+                                pert.get(
+                                    "q_per_kelvin",
+                                    0.05
+                                )
+                            ),
+
+                            random_center=bool(
+                                pert.get(
+                                    "random_center",
+                                    False
+                                )
                             )
                         )
                     )
-                )
 
-                core[
-                    pert[
-                        "temperature_variable"
-                    ]
-                ][:] = T
-
-                tracer[
-                    pert[
-                        "tracer_variable"
-                    ]
-                ][:] = q
-
-                core.close()
-
-                tracer.close()
-
-                print(
-                    f"  balanced_tq"
-                    f" center=({cy},{cx})"
-                    f" amp={delta:+.3f}"
-                )
-
-            # --------------------------------
-            # Legacy Gaussian perturbation
-            # --------------------------------
-
-            else:
-
-                filename = os.path.join(
-                    memdir,
-                    pert["file"]
-                )
-
-                variable = (
-                    pert["variable"]
-                )
-
-                ds = nc.Dataset(
-                    filename,
-                    "r+"
-                )
-
-                field = ds[
-                    variable
-                ][:]
-
-                amp = delta
-
-                if (
-                    "scale_factor"
-                    in pert
-                ):
-
-                    amp *= float(
+                    core[
                         pert[
-                            "scale_factor"
+                            "temperature_variable"
                         ]
+                    ][:] = T
+
+                    tracer[
+                        pert[
+                            "tracer_variable"
+                        ]
+                    ][:] = q
+
+                    core.close()
+                    tracer.close()
+
+                    print(
+                        f"  balanced_tq"
+                        f" center=({cy},{cx})"
+                        f" amp={delta:+.3f}"
                     )
 
-                field, cx, cy = (
-                    apply_centered_gaussian_blob(
+                # --------------------------------
+                # Legacy Gaussian perturbation
+                # --------------------------------
 
-                        field=field,
+                else:
 
-                        amplitude=amp,
-
-                        levels=int(
-                            pert["levels"]
-                        ),
-
-                        decay_scale=float(
-                            pert.get(
-                                "decay_scale",
-                                2.0
-                            )
-                        ),
-
-                        sigma_i=float(
-                            pert["sigma_i"]
-                        ),
-
-                        sigma_j=float(
-                            pert["sigma_j"]
-                        ),
+                    filename = os.path.join(
+                        memdir,
+                        pert["file"]
                     )
-                )
 
-                ds[
-                    variable
-                ][:] = field
+                    variable = (
+                        pert["variable"]
+                    )
 
-                ds.close()
+                    ds = nc.Dataset(
+                        filename,
+                        "r+"
+                    )
 
-                print(
-                    f"  {variable:8s}"
-                    f" center=({cy},{cx})"
-                    f" amp={amp:+.3f}"
-                )
-                
+                    field = ds[
+                        variable
+                    ][:]
+
+                    amp = delta
+
+                    if (
+                        "scale_factor"
+                        in pert
+                    ):
+
+                        amp *= float(
+                            pert[
+                                "scale_factor"
+                            ]
+                        )
+
+                    field, cx, cy = (
+                        apply_centered_gaussian_blob(
+
+                            field=field,
+
+                            amplitude=amp,
+
+                            levels=int(
+                                pert["levels"]
+                            ),
+
+                            decay_scale=float(
+                                pert.get(
+                                    "decay_scale",
+                                    2.0
+                                )
+                            ),
+
+                            sigma_i=float(
+                                pert["sigma_i"]
+                            ),
+
+                            sigma_j=float(
+                                pert["sigma_j"]
+                            ),
+                        )
+                    )
+
+                    ds[
+                        variable
+                    ][:] = field
+
+                    ds.close()
+
+                    print(
+                        f"  {variable:8s}"
+                        f" center=({cy},{cx})"
+                        f" amp={amp:+.3f}"
+                    )
+
+    # =====================================================
+    # DONE
+    # =====================================================
+
+    print()
+    print("=" * 70)
+    print("DONE")
+    print("=" * 70)
+
+    print()
+
+    for mem, delta in members.items():
+
+        print(
+            f"{mem}: "
+            f"{delta:+.2f}"
+        )
+        
 # =====================================================
-# DONE
+# CLI
 # =====================================================
 
-print()
-print("=" * 70)
-print("DONE")
-print("=" * 70)
+def main():
 
-print()
+    import argparse
 
-for mem, delta in members.items():
+    parser = argparse.ArgumentParser()
 
-    print(
-        f"{mem}: "
-        f"{delta:+.2f}"
+    parser.add_argument(
+        "config",
+        nargs="?",
+        default="ensemble_c1667.yaml",
     )
+
+    args = parser.parse_args()
+
+    cfg = load_yaml(
+        args.config
+    )
+
+    generate_ensembles(
+        cfg
+    )
+
+
+if __name__ == "__main__":
+
+    main()

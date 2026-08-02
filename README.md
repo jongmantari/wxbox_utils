@@ -1,10 +1,6 @@
 # wxbox-utils
 
-Utilities for HRRR processing, FV3 grid and restart generation, JEDI LETKF cycling, ensemble generation, observation database construction, diagnostics, post-processing, and visualization.
-
----
-
-# Features
+Utilities for:
 
 - ESG/FV3 Grid Generation
 - HRRR Download and Processing
@@ -12,298 +8,277 @@ Utilities for HRRR processing, FV3 grid and restart generation, JEDI LETKF cycli
 - Ensemble Generation
 - Observation Database Construction
 - JEDI LETKF Cycling
-- LETKF Diagnostics and Verification
+- Diagnostics and Verification
 - Experiment Summary Reporting
 - Diagnostic Movie Generation
 
 ---
 
-# Grid Utilities
+# Quick Start
 
-Generate ESG/FV3 regional grids and mosaic files.
+Install:
 
-Package:
-
-```text
-wxbox_utils/grid/
-
-├── create_esg_grid.py
-└── create_mosaic.py
+```bash
+pip install -e .
 ```
 
-Configuration files:
+Verify:
 
-```text
-wxbox_utils/configs/grid/
-
-├── c1667.yaml
-└── c417.yaml
+```bash
+pip show wxbox-utils
 ```
 
 ---
 
-## Create ESG Grid
+# Command Line Tools
 
-Generate a regional ESG/FV3 grid file.
+## Grid Utilities
 
-Example:
+Create ESG grid:
 
 ```bash
-wxbox-create-grid \
-    wxbox_utils/configs/grid/c1667.yaml
+wxbox-create-grid c1667.yaml
 ```
 
-Input:
+Create FV3 mosaic:
 
-```yaml
-grid:
-
-  target_lon:
-    -166.7
-
-  target_lat:
-    63.0
-
-  idim:
-    250
-
-  jdim:
-    180
-
-  delx:
-    0.03
-
-  dely:
-    0.03
+```bash
+wxbox-create-mosaic c1667.yaml
 ```
 
-Output:
+---
+
+## HRRR Utilities
+
+Download HRRR analyses:
+
+```bash
+wxbox-download-hrrr hrrr_download.yaml
+```
+
+Convert HRRR analyses to FV3 restart files:
+
+```bash
+wxbox-hrrr-to-fv3 hrrr_fv3_c1667.yaml
+```
+
+---
+
+## Ensemble Utilities
+
+Create synthetic ensemble perturbations:
+
+```bash
+wxbox-gen-ens ensemble_c1667.yaml
+```
+
+---
+
+## Observation Database Utilities
+
+Build cycle-aware IODA observation databases:
+
+```bash
+wxbox-build-obsdb asos_concat.yaml
+```
+
+---
+
+## LETKF Workflow
+
+Validate experiment:
+
+```bash
+wxbox-letkf check c1667.yaml
+```
+
+Render JEDI YAML configuration files:
+
+```bash
+wxbox-letkf render c1667.yaml
+```
+
+Run complete cycling experiment:
+
+```bash
+wxbox-letkf run c1667.yaml
+```
+
+---
+
+## Diagnostics and Verification
+
+Generate cycle diagnostics:
+
+```bash
+wxbox-plot run c1667.yaml
+```
+
+Generate experiment summary:
+
+```bash
+wxbox-plot summary c1667.yaml
+```
+
+Generate innovation density plot:
+
+```bash
+wxbox-density c1667.yaml
+```
+
+Generate MP4 animations:
+
+```bash
+wxbox-movie c1667.yaml
+```
+
+---
+
+# Workflow
+
+Typical end-to-end workflow:
+
+```text
+ESG Grid
+    ↓
+HRRR Download
+    ↓
+FV3 Restart Generation
+    ↓
+Ensemble Generation
+    ↓
+IODA Observation Database
+    ↓
+LETKF Cycling
+    ↓
+Cycle Diagnostics
+    ↓
+Experiment Summary
+    ↓
+Movies
+```
+
+---
+
+# Package Structure
+
+```text
+wxbox_utils/
+
+├── configs/
+│   └── templates/
+│
+├── drivers/
+│   ├── letkf_driver.py
+│   └── plot_driver.py
+│
+├── grid/
+│   ├── create_esg_grid.py
+│   └── create_mosaic.py
+│
+├── hrrr/
+│   ├── download_hrrr.py
+│   ├── hrrr_reader.py
+│   ├── hrrr_horizontal_sample.py
+│   ├── hrrr_vertical.py
+│   └── hrrr_to_fv3_restart.py
+│
+├── ensemble/
+│   └── gen_ens.py
+│
+├── obs/
+│   └── build_obsdb_cycles.py
+│
+└── post/
+    ├── cycle_stats.py
+    ├── cycle_plot.py
+    ├── plot_cycle_surface2m.py
+    ├── experiment_density.py
+    ├── summary_plots.py
+    ├── pdf_report.py
+    └── movie_builder.py
+```
+
+---
+
+# Configuration Philosophy
+
+wxbox-utils ships:
+
+```text
+Code
+Templates
+```
+
+Users provide:
+
+```text
+Experiment YAML files
+Grid YAML files
+HRRR YAML files
+Observation YAML files
+```
+
+Template files are distributed with the package:
+
+```text
+wxbox_utils/configs/templates/
+
+├── letkf.yaml.j2
+└── post_surface2m.yaml.j2
+```
+
+---
+
+# Typical Products
+
+## Grid
 
 ```text
 C1667_grid.tile7.nc
-```
 
-Generated fields:
-
-```text
-x
-y
-
-dx
-dy
-
-area
-
-angle_dx
-angle_dy
-```
-
----
-
-## Create FV3 Mosaic
-
-Generate an FV3 mosaic file from an ESG grid.
-
-Example:
-
-```bash
-wxbox-create-mosaic \
-    wxbox_utils/configs/grid/c1667.yaml
-```
-
-Output:
-
-```text
 grid_spec.tile7.halo3.nc
 ```
 
-Automatically updates:
+## HRRR
 
 ```text
-gridfiles
-gridfiles_path
-gridtiles
+*.grib2
 ```
 
-using the generated grid file.
-
----
-
-## Grid Workflow
-
-Typical sequence:
-
-```bash
-wxbox-create-grid \
-    wxbox_utils/configs/grid/c1667.yaml
-
-wxbox-create-mosaic \
-    wxbox_utils/configs/grid/c1667.yaml
-```
-
-Result:
+## FV3 Restart
 
 ```text
-INPUT/
+hrrr.fv_core.res.tile1.nc
 
-├── C1667_grid.tile7.nc
-└── grid_spec.tile7.halo3.nc
+hrrr.fv_tracer.res.tile1.nc
+
+hrrr.fv_srf_wnd.res.tile1.nc
+
+hrrr.sfc_data.nc
+
+*.coupler.res
 ```
 
-These files can then be used by:
-
-- FV3
-- HRRR-to-FV3 interpolation
-- LETKF cycling
-- Post-processing diagnostics
-
----
-
-## Supported Domains
-
-Current examples:
+## Ensemble
 
 ```text
-C1667
-C417
+mem001/
+mem002/
+mem003/
+...
 ```
 
-Additional grids can be generated by creating new YAML files under:
+## Observation Database
 
 ```text
-wxbox_utils/configs/grid/
+obsdb/
+
+└── 20260723T12Z/
+    └── iem_asos_obs_20260723T120000Z.nc4
 ```
 
----
-
-# HRRR Utilities
-
-Download and process HRRR data.
-
-Components:
-
-```text
-download_hrrr.py
-hrrr_reader.py
-hrrr_horizontal.py
-hrrr_vertical.py
-hrrr_to_fv3_restart.py
-```
-
-Capabilities:
-
-- Download HRRR fields
-- Read GRIB2 products
-- Horizontal interpolation
-- Vertical interpolation
-- Convert HRRR output to FV3 restart format
-
----
-
-# Ensemble Utilities
-
-Generate FV3 ensemble perturbations.
-
-Components:
-
-```text
-gen_ens.py
-```
-
-Capabilities:
-
-- Ensemble generation
-- Perturbation creation
-- Ensemble member initialization
-
----
-
-# Observation Utilities
-
-Observation database preparation.
-
-Components:
-
-```text
-build_obsdb_cycles.py
-```
-
-Capabilities:
-
-- Cycle-aware observation database construction
-- Multi-cycle processing
-- Observation inventory management
-
----
-
-# LETKF Workflow
-
-Automated JEDI LETKF workflow management.
-
-Components:
-
-```text
-drivers/letkf_driver.py
-```
-
-Commands:
-
-```bash
-wxbox-letkf check \
-    wxbox_utils/configs/experiments/c1667.yaml
-
-wxbox-letkf render \
-    wxbox_utils/configs/experiments/c1667.yaml
-
-wxbox-letkf run \
-    wxbox_utils/configs/experiments/c1667.yaml
-```
-
-Supported cycling modes:
-
-```yaml
-cycling:
-
-  mode: range
-
-  start: 20260723T12Z
-
-  end: 20260727T00Z
-
-  frequency_hours: 2
-```
-
----
-
-# Post Processing Framework
-
-Cycle diagnostics and experiment-level verification.
-
-Package:
-
-```text
-wxbox_utils/post/
-
-├── cycle_stats.py
-├── cycle_plot.py
-├── plot_cycle_surface2m.py
-├── experiment_density.py
-├── summary_plots.py
-├── pdf_report.py
-└── movie_builder.py
-```
-
----
-
-# Cycle Diagnostics
-
-Generated for each cycle:
-
-```text
-runs/<experiment>/<cycle>/letkf/post/
-```
-
-Products:
+## LETKF Diagnostics
 
 ```text
 background_<cycle>.png
@@ -329,15 +304,7 @@ cycle_stats.json
 cycle_report_<cycle>.pdf
 ```
 
----
-
-# Experiment Summary
-
-Generated products:
-
-```text
-runs/<experiment>/post/
-```
+## Experiment Summary
 
 ```text
 summary_table.csv
@@ -357,11 +324,7 @@ experiment_density.png
 experiment_summary.pdf
 ```
 
----
-
-# Movies
-
-Generated products:
+## Movies
 
 ```text
 background.mp4
@@ -381,11 +344,62 @@ profile.mp4
 density.mp4
 ```
 
-Movies are built automatically from all cycle PNG files defined by the experiment configuration.
+---
+
+# Dependencies
+
+Python:
+
+```text
+numpy
+scipy
+pandas
+xarray
+netCDF4
+
+PyYAML
+Jinja2
+
+matplotlib
+cartopy
+
+boto3
+botocore
+
+cfgrib
+```
+
+Install:
+
+```bash
+pip install -r requirements.txt
+```
 
 ---
 
-# Installation
+# External Requirements
+
+Required for MP4 animation generation:
+
+```text
+ffmpeg
+```
+
+Ubuntu:
+
+```bash
+sudo apt install ffmpeg
+```
+
+Verify:
+
+```bash
+ffmpeg -version
+```
+
+---
+
+# Development Installation
 
 Clone repository:
 
@@ -394,170 +408,16 @@ git clone <repository>
 cd wxbox_utils
 ```
 
-Install in development mode:
+Install editable package:
 
 ```bash
 pip install -e .
 ```
 
-Verify installation:
+Update after changes:
 
 ```bash
-pip show wxbox-utils
-```
-
----
-
-# Python Requirements
-
-Core dependencies:
-
-```text
-numpy
-scipy
-pandas
-xarray
-netCDF4
-pyyaml
-jinja2
-matplotlib
-cartopy
-```
-
-Install manually if needed:
-
-```bash
-pip install \
-    numpy \
-    scipy \
-    pandas \
-    xarray \
-    netCDF4 \
-    pyyaml \
-    jinja2 \
-    matplotlib \
-    cartopy
-```
-
-Optional:
-
-```text
-ffmpeg
-```
-
-Required for MP4 movie generation.
-
-Ubuntu:
-
-```bash
-sudo apt install ffmpeg
-```
-
----
-
-# Example Experiment Configuration
-
-```yaml
-cycling:
-
-  mode: range
-
-  start: 20260723T12Z
-
-  end: 20260727T00Z
-
-  frequency_hours: 2
-
-post:
-
-  enabled: true
-
-  variable: T
-
-  level: 64
-
-  diagnostics:
-
-    obs_variable:
-      airTemperatureAt2M
-
-    qc_group:
-      EffectiveQC0
-```
-
----
-
-# Post Processing
-
-Generate cycle diagnostics:
-
-```bash
-wxbox-plot run \
-    wxbox_utils/configs/experiments/c1667.yaml
-```
-
-Generate experiment summary:
-
-```bash
-wxbox-plot summary \
-    wxbox_utils/configs/experiments/c1667.yaml
-```
-
-Generate experiment-wide innovation density:
-
-```bash
-wxbox-density \
-    wxbox_utils/configs/experiments/c1667.yaml
-```
-
-Generate movies:
-
-```bash
-wxbox-movie \
-    wxbox_utils/configs/experiments/c1667.yaml
-```
-
----
-
-# Package Layout
-
-```text
-wxbox_utils/
-
-├── configs/
-│   ├── experiments/
-│   ├── grid/
-│   └── templates/
-│
-├── drivers/
-│   ├── letkf_driver.py
-│   └── plot_driver.py
-│
-├── ensemble/
-│   └── gen_ens.py
-│
-├── grid/
-│   ├── create_esg_grid.py
-│   └── create_mosaic.py
-│
-├── hrrr/
-│   ├── download_hrrr.py
-│   ├── hrrr_reader.py
-│   ├── hrrr_horizontal.py
-│   ├── hrrr_vertical.py
-│   └── hrrr_to_fv3_restart.py
-│
-├── obs/
-│   └── build_obsdb_cycles.py
-│
-└── post/
-    ├── cycle_stats.py
-    ├── cycle_plot.py
-    ├── plot_cycle_surface2m.py
-    ├── experiment_density.py
-    ├── summary_plots.py
-    ├── pdf_report.py
-    └── movie_builder.py
+pip install -e . --force-reinstall
 ```
 
 ---
