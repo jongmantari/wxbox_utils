@@ -139,7 +139,7 @@ wxbox-movie c1667.yaml
 Typical end-to-end workflow:
 
 ```text
-ESG Grid
+FV3 Grid
     ↓
 HRRR Download
     ↓
