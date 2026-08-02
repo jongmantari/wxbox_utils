@@ -34,7 +34,7 @@ pip show wxbox-utils
 
 ## Grid Utilities
 
-Create ESG grid:
+Create FV3 grid:
 
 ```bash
 wxbox-create-grid c1667.yaml
