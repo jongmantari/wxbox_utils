@@ -2,7 +2,7 @@
 
 Utilities for:
 
-- ESG/FV3 Grid Generation
+- FV3 Grid Generation
 - HRRR Download and Processing
 - HRRR → FV3 Restart Conversion
 - Ensemble Generation
