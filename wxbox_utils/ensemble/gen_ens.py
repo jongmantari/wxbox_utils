@@ -8,6 +8,8 @@ import yaml
 import numpy as np
 import netCDF4 as nc
 
+import datetime as dt
+
 # =====================================================
 # YAML
 # =====================================================
@@ -298,13 +300,34 @@ def generate_ensembles(cfg):
 
     cycles = []
 
-    for d in sorted(
-        os.listdir(cycles_root)
-    ):
+    start = dt.datetime.strptime(
+        cfg["cycles"]["start"],
+        "%Y%m%dT%HZ"
+    )
+
+    end = dt.datetime.strptime(
+        cfg["cycles"]["end"],
+        "%Y%m%dT%HZ"
+    )
+
+    interval = int(
+        cfg["cycles"].get(
+            "interval_hours",
+            1
+        )
+    )
+
+    current = start
+
+    while current <= end:
+
+        cycle = current.strftime(
+            "%Y%m%dT%HZ"
+        )
 
         cycle_path = os.path.join(
             cycles_root,
-            d
+            cycle
         )
 
         if (
@@ -318,7 +341,21 @@ def generate_ensembles(cfg):
             )
         ):
 
-            cycles.append(d)
+            cycles.append(
+                cycle
+            )
+
+        else:
+
+            print(
+                f"Missing cycle: "
+                f"{cycle}"
+            )
+
+        current += dt.timedelta(
+            hours=interval
+        )
+
 
     print()
     print("=" * 70)

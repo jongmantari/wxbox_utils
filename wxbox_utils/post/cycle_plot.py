@@ -92,18 +92,29 @@ def add_cbar(obj, label):
 
 def vmax99(data):
 
-    valid = np.abs(
-        data[np.isfinite(data)]
+    data = np.asarray(
+        data,
+        dtype=np.float64,
     )
 
-    if valid.size == 0:
+    data = data[
+        np.isfinite(data)
+    ]
+
+    #
+    # Remove IODA fill values
+    #
+    data = data[
+        np.abs(data) < 1.0e30
+    ]
+
+    if data.size == 0:
         return 1.0
 
     return np.percentile(
-        valid,
+        np.abs(data),
         99,
     )
-
 
 # =====================================================
 # Model Fields
@@ -371,6 +382,30 @@ def plot_innovation_map(
 
 ):
 
+    innovation = np.asarray(
+        innovation,
+        dtype=np.float64,
+    )
+
+    innovation[
+        np.abs(innovation) > 1.0e30
+    ] = np.nan
+
+    mask = (
+        np.isfinite(lon)
+        &
+        np.isfinite(lat)
+        &
+        np.isfinite(innovation)
+    )
+
+    lon = lon[mask]
+    lat = lat[mask]
+    innovation = innovation[mask]
+
+    if len(innovation) == 0:
+        return
+    
     fig = plt.figure(
         figsize=(10, 7)
     )
@@ -549,6 +584,10 @@ def plot_spread(
 # OMB / OMA Density
 # =====================================================
 
+# =====================================================
+# OMB / OMA Density
+# =====================================================
+
 def plot_density(
 
     outfile,
@@ -565,24 +604,106 @@ def plot_density(
 
 ):
 
-    fig = plt.figure(
-        figsize=(8, 6)
+    #
+    # Convert to float64
+    #
+    ombg = np.asarray(
+        ombg,
+        dtype=np.float64,
     )
 
+    oman = np.asarray(
+        oman,
+        dtype=np.float64,
+    )
+
+    #
+    # Remove IODA fill values
+    #
+    ombg[
+        np.abs(ombg) > 1.0e30
+    ] = np.nan
+
+    oman[
+        np.abs(oman) > 1.0e30
+    ] = np.nan
+
+    #
+    # Remove NaNs
+    #
+    ombg = ombg[
+        np.isfinite(ombg)
+    ]
+
+    oman = oman[
+        np.isfinite(oman)
+    ]
+
+    #
+    # Need enough points for KDE
+    #
+    if (
+        len(ombg) < 3
+        or
+        len(oman) < 3
+    ):
+
+        print(
+            f"[SKIP] density {cycle}"
+        )
+
+        return
+
+    #
+    # Debug
+    #
+    print()
+
+    print(
+        f"[DENSITY] {cycle}"
+    )
+
+    print(
+        "OMB:",
+        np.min(ombg),
+        np.max(ombg),
+    )
+
+    print(
+        "OMA:",
+        np.min(oman),
+        np.max(oman),
+    )
+
+    #
+    # Common plotting range
+    #
     xmin = min(
-        ombg.min(),
-        oman.min(),
+        np.min(ombg),
+        np.min(oman),
     )
 
     xmax = max(
-        ombg.max(),
-        oman.max(),
+        np.max(ombg),
+        np.max(oman),
     )
+
+    #
+    # Protect against degenerate range
+    #
+    if abs(xmax - xmin) < 1e-6:
+
+        xmin -= 1.0
+        xmax += 1.0
 
     xx = np.linspace(
         xmin,
         xmax,
         points,
+    )
+
+    fig = plt.figure(
+        figsize=(8, 6)
     )
 
     kde_omb = gaussian_kde(
@@ -594,6 +715,11 @@ def plot_density(
         oman,
         bw_method=bandwidth,
     )
+
+    print("xmin =", xmin)
+    print("xmax =", xmax)
+    print("xx min =", xx.min())
+    print("xx max =", xx.max())
 
     plt.plot(
         xx,
@@ -607,6 +733,14 @@ def plot_density(
         kde_oma(xx),
         lw=3,
         label="OMA",
+    )
+
+    plt.xlabel(
+        "Innovation"
+    )
+
+    plt.ylabel(
+        "Density"
     )
 
     plt.grid(
@@ -626,7 +760,6 @@ def plot_density(
     )
 
     plt.close(fig)
-
 
 # =====================================================
 # Summary Page

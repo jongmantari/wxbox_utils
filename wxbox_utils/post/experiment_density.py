@@ -135,6 +135,10 @@ def get_cycles(cfg):
 # Read all innovations
 # =====================================================
 
+# =====================================================
+# Read all innovations
+# =====================================================
+
 def collect_innovations(cfg):
 
     experiment_dir = Path(
@@ -147,8 +151,13 @@ def collect_innovations(cfg):
         ["obs_variable"]
     )
 
-    ombg_all = []
+    qc_group = (
+        cfg["post"]
+        ["diagnostics"]
+        ["qc_group"]
+    )
 
+    ombg_all = []
     oman_all = []
 
     cycles = get_cycles(cfg)
@@ -186,21 +195,69 @@ def collect_innovations(cfg):
                 engine="netcdf4",
             )
 
-            ombg = ombg_ds[
+            qc_ds = xr.open_dataset(
+                diag,
+                group=qc_group,
+                engine="netcdf4",
+            )
+
+            ombg = np.asarray(
+                ombg_ds[
+                    obsvar
+                ].values,
+                dtype=np.float64,
+            )
+
+            oman = np.asarray(
+                oman_ds[
+                    obsvar
+                ].values,
+                dtype=np.float64,
+            )
+
+            qc = qc_ds[
                 obsvar
             ].values
 
-            oman = oman_ds[
-                obsvar
-            ].values
+            #
+            # Remove IODA fill values
+            #
+            ombg[
+                np.abs(ombg) > 1.0e30
+            ] = np.nan
+
+            oman[
+                np.abs(oman) > 1.0e30
+            ] = np.nan
+
+            #
+            # Assimilated obs only
+            #
+            mask = (
+                np.isfinite(ombg)
+                &
+                np.isfinite(oman)
+                &
+                (qc == 0)
+            )
 
             ombg = ombg[
-                np.isfinite(ombg)
+                mask
             ]
 
             oman = oman[
-                np.isfinite(oman)
+                mask
             ]
+
+            if len(ombg) == 0:
+                continue
+
+            print(
+                f"[READ] {cycle} "
+                f"n={len(ombg)} "
+                f"OMB[{ombg.min():.2f},{ombg.max():.2f}] "
+                f"OMA[{oman.min():.2f},{oman.max():.2f}]"
+            )
 
             ombg_all.extend(
                 ombg.tolist()
@@ -208,10 +265,6 @@ def collect_innovations(cfg):
 
             oman_all.extend(
                 oman.tolist()
-            )
-
-            print(
-                f"[READ] {cycle}"
             )
 
         except Exception as e:
@@ -225,8 +278,14 @@ def collect_innovations(cfg):
             )
 
     return (
-        np.asarray(ombg_all),
-        np.asarray(oman_all),
+        np.asarray(
+            ombg_all,
+            dtype=np.float64,
+        ),
+        np.asarray(
+            oman_all,
+            dtype=np.float64,
+        ),
     )
 
 
@@ -235,34 +294,79 @@ def collect_innovations(cfg):
 # =====================================================
 
 def build_density_plot(
+
     ombg,
+
     oman,
+
     outfile,
+
     bandwidth,
+
     points,
+
 ):
 
-    if len(ombg) == 0:
+    ombg = np.asarray(
+        ombg,
+        dtype=np.float64,
+    )
+
+    oman = np.asarray(
+        oman,
+        dtype=np.float64,
+    )
+
+    ombg = ombg[
+        np.isfinite(ombg)
+    ]
+
+    oman = oman[
+        np.isfinite(oman)
+    ]
+
+    if len(ombg) < 3:
 
         raise RuntimeError(
-            "No OMB values collected"
+            "No valid OMB values"
         )
 
-    if len(oman) == 0:
+    if len(oman) < 3:
 
         raise RuntimeError(
-            "No OMA values collected"
+            "No valid OMA values"
         )
+
+    print()
+
+    print(
+        f"[DENSITY] "
+        f"OMB {ombg.min():.3f} "
+        f"{ombg.max():.3f}"
+    )
+
+    print(
+        f"[DENSITY] "
+        f"OMA {oman.min():.3f} "
+        f"{oman.max():.3f}"
+    )
 
     xmin = min(
-        ombg.min(),
-        oman.min(),
+        np.min(ombg),
+        np.min(oman),
     )
 
     xmax = max(
-        ombg.max(),
-        oman.max(),
+        np.max(ombg),
+        np.max(oman),
     )
+
+    if abs(
+        xmax - xmin
+    ) < 1.0e-6:
+
+        xmin -= 1.0
+        xmax += 1.0
 
     xx = np.linspace(
         xmin,
@@ -270,15 +374,19 @@ def build_density_plot(
         points,
     )
 
+    #
+    # Use default KDE
+    #
     kde_omb = gaussian_kde(
-        ombg,
-        bw_method=bandwidth,
+        ombg
     )
 
     kde_oma = gaussian_kde(
-        oman,
-        bw_method=bandwidth,
+        oman
     )
+
+    yy_omb = kde_omb(xx)
+    yy_oma = kde_oma(xx)
 
     plt.figure(
         figsize=(8, 6)
@@ -286,14 +394,14 @@ def build_density_plot(
 
     plt.plot(
         xx,
-        kde_omb(xx),
+        yy_omb,
         lw=3,
         label="OMB",
     )
 
     plt.plot(
         xx,
-        kde_oma(xx),
+        yy_oma,
         lw=3,
         label="OMA",
     )
@@ -305,7 +413,7 @@ def build_density_plot(
     plt.legend()
 
     plt.xlabel(
-        "Innovation"
+        "Innovation (K)"
     )
 
     plt.ylabel(
@@ -325,7 +433,6 @@ def build_density_plot(
 
     plt.close()
 
-
 # =====================================================
 # Main
 # =====================================================
@@ -342,10 +449,8 @@ def main():
 
     args = parser.parse_args()
 
-    config_file = args.config
-
     cfg = load_yaml(
-        config_file
+        args.config
     )
 
     ombg, oman = (
@@ -388,18 +493,6 @@ def main():
         f"[DONE] {outfile}"
     )
 
+
 if __name__ == "__main__":
-
-    import argparse
-
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument(
-        "config"
-    )
-
-    args = parser.parse_args()
-
-    main(
-        args.config
-    )
+    main()

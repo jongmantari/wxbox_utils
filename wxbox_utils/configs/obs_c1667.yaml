@@ -1,0 +1,44 @@
+grid:
+
+  file: Data/inputs/lam_c1667/INPUT/C1667_grid.tile7.nc
+
+background:
+
+  file: Data/inputs/lam_c1667/bkg/20201215.000000.rrfs_C1667.fv_core.res.tile1.nc
+
+  coupler_file: Data/inputs/lam_c1667/bkg/20201215.000000.rrfs_C1667.coupler.res
+
+  temperature_variable: T
+
+obs:
+
+  template: surface_t2m_obs_ref.nc4
+
+  output: surface_t2m_obs_c1667.nc4
+
+placement:
+
+  mode: centered_cluster
+
+  distance_deg: 0.02
+
+metadata:
+
+  height: 2.0
+
+  stationElevation: 0.0
+
+  stationICAO: TEST
+
+airTemperatureAt2M:
+
+  mode: background_random
+
+  #
+  # Tobs = background + mean_offset + N(0,sigma)
+  #
+  mean_offset: 1.0
+
+  sigma: 0.3
+
+  seed: 42

@@ -42,27 +42,59 @@ import netCDF4 as nc
 # Basic Helpers
 # ======================================================
 
+# ======================================================
+# IODA cleanup
+# ======================================================
+
+def clean_ioda(x):
+
+    x = np.asarray(
+        x,
+        dtype=np.float64
+    )
+
+    #
+    # IODA missing values
+    #
+    x[
+        np.abs(x) > 1.0e30
+    ] = np.nan
+
+    return x
+
+
+# ======================================================
+# Basic Helpers
+# ======================================================
+
 def rmse(x):
 
-    x = np.asarray(x)
+    x = clean_ioda(x)
+
+    if np.all(np.isnan(x)):
+        return np.nan
 
     return float(
         np.sqrt(
-            np.nanmean(x ** 2)
+            np.nanmean(
+                x ** 2
+            )
         )
     )
 
 
 def mean_abs(x):
 
-    x = np.asarray(x)
+    x = clean_ioda(x)
+
+    if np.all(np.isnan(x)):
+        return np.nan
 
     return float(
         np.nanmean(
             np.abs(x)
         )
     )
-
 
 # ======================================================
 # Diagnostics Readers
@@ -183,16 +215,20 @@ def compute_spreads(
     obsvar,
 ):
 
-    hofx0 = read_hofx_members(
-        obsdiag_file,
-        "hofx0_",
-        obsvar,
+    hofx0 = clean_ioda(
+        read_hofx_members(
+            obsdiag_file,
+            "hofx0_",
+            obsvar,
+        )
     )
 
-    hofx1 = read_hofx_members(
-        obsdiag_file,
-        "hofx1_",
-        obsvar,
+    hofx1 = clean_ioda(
+        read_hofx_members(
+            obsdiag_file,
+            "hofx1_",
+            obsvar,
+        )
     )
 
     spread_b_pt = np.std(
@@ -257,19 +293,25 @@ def compute_cycle_statistics(
 
 ):
 
-    obsval = read_obs_values(
-        obsdiag_file,
-        obs_variable,
+    obsval = clean_ioda(
+        read_obs_values(
+            obsdiag_file,
+            obs_variable,
+        )
     )
 
-    ombg = read_omb(
-        obsdiag_file,
-        obs_variable,
+    ombg = clean_ioda(
+        read_omb(
+            obsdiag_file,
+            obs_variable,
+        )
     )
 
-    oman = read_oma(
-        obsdiag_file,
-        obs_variable,
+    oman = clean_ioda(
+        read_oma(
+            obsdiag_file,
+            obs_variable,
+        )
     )
 
     qc = read_qc(

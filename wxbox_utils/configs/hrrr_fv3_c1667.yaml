@@ -8,6 +8,15 @@ cycles:
   root:
     runs/hrrr_bdp
 
+  start:
+    20260803T06Z
+
+  end:
+    20260806T14Z
+
+  interval_hours:
+    2
+
 grid:
 
   name:

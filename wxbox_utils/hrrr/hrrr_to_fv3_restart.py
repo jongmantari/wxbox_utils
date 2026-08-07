@@ -4,6 +4,7 @@ import shutil
 import yaml
 import numpy as np
 import xarray as xr
+import datetime as dt
 
 from pathlib import Path
 
@@ -119,17 +120,58 @@ class HRRRToFV3Restart:
     # --------------------------------------------------
 
     def discover_cycles(self):
-
+        
+        start = dt.datetime.strptime(
+            self.cfg["cycles"]["start"],
+            "%Y%m%dT%HZ"
+        )
+        
+        end = dt.datetime.strptime(
+            self.cfg["cycles"]["end"],
+            "%Y%m%dT%HZ"
+        )
+        
+        interval = int(
+            self.cfg["cycles"].get(
+                "interval_hours",
+                1
+            )
+        )
+        
+        step = dt.timedelta(
+            hours=interval
+        )
+        
         cycles = []
-
-        for d in sorted(
-            self.cycles_root.iterdir()
-        ):
-
-            if d.is_dir():
-
-                cycles.append(d)
-
+        
+        current = start
+        
+        while current <= end:
+        
+            cycle_tag = current.strftime(
+                "%Y%m%dT%HZ"
+            )
+        
+            cycle_dir = (
+                self.cycles_root
+                / cycle_tag
+            )
+        
+            if cycle_dir.exists():
+        
+                cycles.append(
+                    cycle_dir
+                )
+        
+            else:
+        
+                print(
+                    f"Missing cycle: "
+                    f"{cycle_tag}"
+                )
+        
+            current += step
+        
         return cycles
 
     # --------------------------------------------------

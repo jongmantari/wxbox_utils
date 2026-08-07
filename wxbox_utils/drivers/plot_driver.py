@@ -520,10 +520,12 @@ def run_cycle(
     )
 
     cmd = [
-        
-        "python",
-        
-        "post/plot_cycle_surface2m.py",
+
+        sys.executable,
+
+        "-m",
+
+        "wxbox_utils.post.plot_cycle_surface2m",
 
         str(yamlfile),
     ]
@@ -537,7 +539,6 @@ def run_cycle(
         cmd,
         check=True,
     )
-
 
 # =====================================================
 # Summary

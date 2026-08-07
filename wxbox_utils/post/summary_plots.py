@@ -30,6 +30,36 @@ import pandas as pd
 
 import matplotlib.pyplot as plt
 
+import numpy as np
+
+# =====================================================
+# Cycle Tick Helper
+# =====================================================
+
+def apply_cycle_ticks(df):
+
+    n = len(df)
+
+    #
+    # About 15 labels max
+    #
+    stride = max(
+        1,
+        n // 15
+    )
+
+    idx = np.arange(
+        0,
+        n,
+        stride,
+    )
+
+    plt.xticks(
+        idx,
+        df["cycle"].iloc[idx],
+        rotation=45,
+        ha="right",
+    )
 
 # =====================================================
 # Load Summary Table
@@ -109,44 +139,54 @@ def plot_innovation_timeseries(
 ):
 
     plt.figure(
-        figsize=(10, 4)
+        figsize=(14, 5)
+    )
+
+    x = np.arange(
+        len(df)
     )
 
     plt.plot(
-
-        df["cycle"],
-
+        x,
         df["omb_mean"],
-
-        "-o",
-
-        lw=2,
-
+        "-",
+        lw=1.5, markersize=3,
         label="OMB Mean",
     )
 
     plt.plot(
-
-        df["cycle"],
-
+        x,
         df["oma_mean"],
-
-        "-o",
-
-        lw=2,
-
+        "-",
+        lw=1.5, markersize=3,
         label="OMA Mean",
     )
 
     plt.ylabel(
-        "Mean |Innovation|"
+        "Mean Innovation"
     )
 
     plt.xlabel(
         "Cycle"
     )
 
+    #
+    # show ~12 cycle labels
+    #
+    stride = max(
+        1,
+        len(df) // 12
+    )
+
+    idx = np.arange(
+        0,
+        len(df),
+        stride,
+    )
+
     plt.xticks(
+        idx,
+        df["cycle"].iloc[idx],
         rotation=45,
         ha="right",
     )
@@ -159,7 +199,6 @@ def plot_innovation_timeseries(
         outfile
     )
 
-
 # =====================================================
 # RMSE
 # =====================================================
@@ -170,32 +209,26 @@ def plot_rmse_timeseries(
 ):
 
     plt.figure(
-        figsize=(10, 4)
+        figsize=(12, 4)
+    )
+
+    x = np.arange(
+        len(df)
     )
 
     plt.plot(
-
-        df["cycle"],
-
+        x,
         df["omb_rmse"],
-
         "-o",
-
-        lw=2,
-
+        lw=1.5, markersize=3,
         label="OMB RMSE",
     )
 
     plt.plot(
-
-        df["cycle"],
-
+        x,
         df["oma_rmse"],
-
         "-o",
-
-        lw=2,
-
+        lw=1.5, markersize=3,
         label="OMA RMSE",
     )
 
@@ -207,10 +240,7 @@ def plot_rmse_timeseries(
         "Cycle"
     )
 
-    plt.xticks(
-        rotation=45,
-        ha="right",
-    )
+    apply_cycle_ticks(df)
 
     plt.title(
         "RMSE Time Series"
@@ -231,32 +261,26 @@ def plot_obs_count_timeseries(
 ):
 
     plt.figure(
-        figsize=(10, 4)
+        figsize=(12, 4)
+    )
+
+    x = np.arange(
+        len(df)
     )
 
     plt.plot(
-
-        df["cycle"],
-
+        x,
         df["nobs_total"],
-
         "-o",
-
-        lw=2,
-
+        lw=1.5, markersize=3,
         label="Total Obs",
     )
 
     plt.plot(
-
-        df["cycle"],
-
+        x,
         df["nobs_assimilated"],
-
         "-o",
-
-        lw=2,
-
+        lw=1.5, markersize=3,
         label="Assimilated Obs",
     )
 
@@ -268,10 +292,7 @@ def plot_obs_count_timeseries(
         "Cycle"
     )
 
-    plt.xticks(
-        rotation=45,
-        ha="right",
-    )
+    apply_cycle_ticks(df)
 
     plt.title(
         "Observation Counts"
@@ -280,7 +301,6 @@ def plot_obs_count_timeseries(
     save_plot(
         outfile
     )
-
 
 # =====================================================
 # Assimilation Rate
@@ -292,18 +312,18 @@ def plot_assimilation_rate(
 ):
 
     plt.figure(
-        figsize=(10, 4)
+        figsize=(12, 4)
+    )
+
+    x = np.arange(
+        len(df)
     )
 
     plt.plot(
-
-        df["cycle"],
-
+        x,
         df["assimilation_rate"],
-
         "-o",
-
-        lw=2,
+        lw=1.5, markersize=3,
     )
 
     plt.ylabel(
@@ -314,10 +334,7 @@ def plot_assimilation_rate(
         "Cycle"
     )
 
-    plt.xticks(
-        rotation=45,
-        ha="right",
-    )
+    apply_cycle_ticks(df)
 
     plt.title(
         "Assimilation Rate"
@@ -348,32 +365,26 @@ def plot_spread_timeseries(
 ):
 
     plt.figure(
-        figsize=(10, 4)
+        figsize=(12, 4)
+    )
+
+    x = np.arange(
+        len(df)
     )
 
     plt.plot(
-
-        df["cycle"],
-
+        x,
         df["spread_background"],
-
         "-o",
-
-        lw=2,
-
+        lw=1.5, markersize=3,
         label="Background",
     )
 
     plt.plot(
-
-        df["cycle"],
-
+        x,
         df["spread_analysis"],
-
         "-o",
-
-        lw=2,
-
+        lw=1.5, markersize=3,
         label="Analysis",
     )
 
@@ -385,10 +396,7 @@ def plot_spread_timeseries(
         "Cycle"
     )
 
-    plt.xticks(
-        rotation=45,
-        ha="right",
-    )
+    apply_cycle_ticks(df)
 
     plt.title(
         "Spread Evolution"
@@ -397,7 +405,6 @@ def plot_spread_timeseries(
     save_plot(
         outfile
     )
-
 
 # =====================================================
 # CSV

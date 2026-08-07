@@ -27,6 +27,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from wxbox_utils.post.cycle_stats import (
     compute_cycle_statistics,
     write_cycle_statistics,
+    clean_ioda,
 )
 
 from wxbox_utils.post.cycle_plot import (
@@ -348,18 +349,37 @@ def main(yaml_file):
         lon_obs,
     )
 
-    obsval = obs_ds[
+    #=
+    obsval = clean_ioda(
+        obs_ds[
+            obs_variable
+        ].values
+    )
+
+    ombg = clean_ioda(
+        ombg_ds[
+            obs_variable
+        ].values
+    )
+
+    oman = clean_ioda(
+        oman_ds[
+            obs_variable
+        ].values
+    )
+
+    qc_ds = xr.open_dataset(
+        obsdiag_file,
+        group=qc_group,
+        engine="netcdf4",
+    )
+
+    qc = qc_ds[
         obs_variable
     ].values
-
-    ombg = ombg_ds[
-        obs_variable
-    ].values
-
-    oman = oman_ds[
-        obs_variable
-    ].values
-
+    #=
+    
+    #=
     mask = (
 
         np.isfinite(lat_obs)
@@ -380,7 +400,12 @@ def main(yaml_file):
 
         np.isfinite(oman)
 
+        &
+
+        (qc == 0)
+
     )
+    #=
 
     lat_obs = lat_obs[
         mask
@@ -401,6 +426,24 @@ def main(yaml_file):
     oman = oman[
         mask
     ]
+
+    print()
+
+    print(
+        f"Assimilated obs: {len(obsval)}"
+    )
+
+    print(
+        f"OMB range: "
+        f"{np.nanmin(ombg):.3f} "
+        f"{np.nanmax(ombg):.3f}"
+    )
+
+    print(
+        f"OMA range: "
+        f"{np.nanmin(oman):.3f} "
+        f"{np.nanmax(oman):.3f}"
+    )
 
     # -----------------------------------
     # Vertical profile

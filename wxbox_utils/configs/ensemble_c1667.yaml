@@ -8,6 +8,15 @@ cycles:
   root:
     runs/c1667
 
+  start:
+    20260723T00Z
+
+  end:
+    20260806T14Z
+
+  interval_hours:
+    2
+
 background:
 
   directory:

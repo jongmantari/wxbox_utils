@@ -5,10 +5,10 @@ obs_types:
 cycles:
 
   start:
-    20260723T12Z
+    20260723T00Z
 
   end:
-    20260727T12Z
+    20260806T14Z
 
   interval_hours:
     2
@@ -31,7 +31,7 @@ obs:
   asos:
 
     input_dir:
-      obs/ioda
+      /home/jonggyunkim/Data/datasets-etl/ioda
 
     file_pattern:
       iem_asos_obs_%Y%m%dT%H0000Z.nc4

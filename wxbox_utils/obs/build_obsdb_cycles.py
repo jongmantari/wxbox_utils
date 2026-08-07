@@ -1,23 +1,12 @@
 #!/usr/bin/env python3
 
 import sys
-import argparse
+import yaml
 import pathlib
 import datetime as dt
 
-import yaml
 import numpy as np
 import netCDF4 as nc
-
-# =====================================================
-# YAML
-# =====================================================
-
-def load_yaml(filename):
-
-    with open(filename) as f:
-
-        return yaml.safe_load(f)
 
 # =====================================================
 # CONFIG
@@ -77,219 +66,361 @@ def copy_global_attributes(src, dst):
 # MAIN
 # =====================================================
 
-def build_obsdb_cycles(cfg):
+for obs_type in cfg["obs_types"]:
 
-    start = dt.datetime.strptime(
-        cfg["cycles"]["start"],
-        "%Y%m%dT%HZ"
+    obs_cfg = cfg["obs"][obs_type]
+
+    input_dir = pathlib.Path(
+        obs_cfg["input_dir"]
     )
 
-    end = dt.datetime.strptime(
-        cfg["cycles"]["end"],
-        "%Y%m%dT%HZ"
+    file_pattern = (
+        obs_cfg["file_pattern"]
     )
 
-    cycle_step = dt.timedelta(
-        hours=cfg["cycles"]["interval_hours"]
+    output_pattern = (
+        obs_cfg["output_pattern"]
     )
 
-    before_hours = cfg["window"]["before_hours"]
-
-    after_hours = cfg["window"]["after_hours"]
-
-    outroot = pathlib.Path(
-        cfg["output"]["root"]
+    obs_errors = (
+        obs_cfg["obserror"]
     )
 
-    KEEP_GROUPS = [
+    current = start
 
-        "MetaData",
+    while current <= end:
 
-        "ObsValue",
-
-        "DerivedObsValue",
-
-        "PreQC",
-    ]
-
-    created_count = 0
-
-    missing_count = 0
-
-    for obs_type in cfg["obs_types"]:
-
-        obs_cfg = cfg["obs"][obs_type]
-
-        input_dir = pathlib.Path(
-            obs_cfg["input_dir"]
+        cycle_dir = current.strftime(
+            "%Y%m%dT%HZ"
         )
 
-        file_pattern = (
-            obs_cfg["file_pattern"]
+        outfile_name = current.strftime(
+            output_pattern
         )
 
-        output_pattern = (
-            obs_cfg["output_pattern"]
+        outdir = (
+            outroot
+            / obs_type
+            / cycle_dir
         )
 
-        obs_errors = (
-            obs_cfg["obserror"]
+        outdir.mkdir(
+            parents=True,
+            exist_ok=True
         )
 
-        current = start
+        outfile = (
+            outdir
+            / outfile_name
+        )
 
-        while current <= end:
+        # -------------------------------------------------
+        # gather files in window
+        # -------------------------------------------------
 
-            cycle_dir = current.strftime(
-                "%Y%m%dT%HZ"
+        infiles = []
+
+        for dh in range(
+            -before_hours,
+            after_hours + 1
+        ):
+
+            t = (
+                current
+                + dt.timedelta(
+                    hours=dh
+                )
             )
 
-            outfile_name = current.strftime(
-                output_pattern
+            fname = t.strftime(
+                file_pattern
             )
 
-            outdir = (
-                outroot
-                / obs_type
-                / cycle_dir
+            fpath = (
+                input_dir
+                / fname
             )
 
-            outdir.mkdir(
-                parents=True,
-                exist_ok=True
-            )
+            if fpath.exists():
 
-            outfile = (
-                outdir
-                / outfile_name
-            )
-
-            #
-            # -------------------------------------------------
-            # gather files in window
-            # -------------------------------------------------
-            #
-            infiles = []
-
-            for dh in range(
-                -before_hours,
-                after_hours + 1
-            ):
-
-                t = (
-                    current
-                    + dt.timedelta(
-                        hours=dh
-                    )
+                infiles.append(
+                    fpath
                 )
 
-                fname = t.strftime(
-                    file_pattern
-                )
-
-                fpath = (
-                    input_dir
-                    / fname
-                )
-
-                if fpath.exists():
-
-                    infiles.append(
-                        fpath
-                    )
-
-            if len(infiles) == 0:
-
-                print(
-                    f"No files: {cycle_dir}"
-                )
-
-                missing_count += 1
-
-                current += cycle_step
-
-                continue
-
-            print()
+        if len(infiles) == 0:
 
             print(
-                f"Cycle: {cycle_dir}"
+                "No files:",
+                cycle_dir
             )
-
-            print(
-                f"Files: {len(infiles)}"
-            )
-
-            #
-            # -------------------------------------------------
-            # EVERYTHING FROM YOUR EXISTING SCRIPT
-            # -------------------------------------------------
-            #
-            # sample file
-            # total_locations
-            # create output
-            # create schema
-            # concatenate
-            # build ObsError
-            #
-            # paste your existing code here unchanged
-            #
-            # -------------------------------------------------
-            #
-
-            print(
-                f"Created: {outfile}"
-            )
-
-            created_count += 1
 
             current += cycle_step
+            continue
 
-    print()
+        print()
+        print(
+            "Cycle:",
+            cycle_dir
+        )
 
-    print("=" * 60)
+        print(
+            "Files:",
+            len(infiles)
+        )
 
-    print(
-        f"Created cycles : {created_count}"
-    )
+        # -------------------------------------------------
+        # sample file
+        # -------------------------------------------------
 
-    print(
-        f"Missing cycles : {missing_count}"
-    )
+        sample = nc.Dataset(
+            infiles[0]
+        )
 
-    print(
-        f"Output root    : {outroot}"
-    )
+        total_locations = 0
 
-    print()
+        for f in infiles:
 
-    print("DONE")
-    
-# =====================================================
-# CLI
-# =====================================================
+            ds = nc.Dataset(f)
 
-def main():
+            total_locations += len(
+                ds.dimensions[
+                    "Location"
+                ]
+            )
 
-    parser = argparse.ArgumentParser()
+            ds.close()
 
-    parser.add_argument(
-        "config",
-        nargs="?",
-        default="asos_concat.yaml",
-    )
+        # -------------------------------------------------
+        # create output
+        # -------------------------------------------------
 
-    args = parser.parse_args()
+        out = nc.Dataset(
+            outfile,
+            "w"
+        )
 
-    cfg = load_yaml(
-        args.config
-    )
+        copy_global_attributes(
+            sample,
+            out
+        )
 
-    build_obsdb_cycles(
-        cfg
-    )
+        out.createDimension(
+            "Location",
+            total_locations
+        )
 
+        locvar = out.createVariable(
+            "Location",
+            "i8",
+            ("Location",)
+        )
 
-if __name__ == "__main__":
+        locvar[:] = np.arange(
+            total_locations
+        )
 
-    main()
+        # -------------------------------------------------
+        # create schema
+        # -------------------------------------------------
+
+        for gname in KEEP_GROUPS:
+
+            if gname not in sample.groups:
+                continue
+
+            gsrc = sample.groups[gname]
+
+            gout = out.createGroup(
+                gname
+            )
+
+            for vname in gsrc.variables:
+
+                srcvar = (
+                    gsrc.variables[
+                        vname
+                    ]
+                )
+
+                dtype = srcvar.dtype
+
+                fill_value = None
+
+                if (
+                    "_FillValue"
+                    in srcvar.ncattrs()
+                ):
+                    fill_value = (
+                        srcvar.getncattr(
+                            "_FillValue"
+                        )
+                    )
+
+                if (
+                    str(dtype)
+                    .startswith(
+                        "<class 'str'"
+                    )
+                ):
+
+                    outvar = (
+                        gout.createVariable(
+                            vname,
+                            str,
+                            ("Location",)
+                        )
+                    )
+
+                else:
+
+                    outvar = (
+                        gout.createVariable(
+                            vname,
+                            dtype,
+                            ("Location",),
+                            fill_value=fill_value
+                        )
+                    )
+
+                for att in (
+                    srcvar.ncattrs()
+                ):
+
+                    if att == "_FillValue":
+                        continue
+
+                    outvar.setncattr(
+                        att,
+                        srcvar.getncattr(att)
+                    )
+
+        sample.close()
+
+        # -------------------------------------------------
+        # concatenate
+        # -------------------------------------------------
+
+        offset = 0
+
+        for f in infiles:
+
+            ds = nc.Dataset(f)
+
+            nloc = len(
+                ds.dimensions[
+                    "Location"
+                ]
+            )
+
+            sl = slice(
+                offset,
+                offset + nloc
+            )
+
+            for gname in KEEP_GROUPS:
+
+                if gname not in ds.groups:
+                    continue
+
+                gsrc = ds.groups[gname]
+                gout = out.groups[gname]
+
+                for vname in gout.variables:
+
+                    if (
+                        vname
+                        not in
+                        gsrc.variables
+                    ):
+                        continue
+
+                    gout.variables[
+                        vname
+                    ][sl] = (
+                        gsrc.variables[
+                            vname
+                        ][:]
+                    )
+
+            offset += nloc
+
+            ds.close()
+
+        # -------------------------------------------------
+        # ObsError
+        # -------------------------------------------------
+
+        if (
+            "ObsError"
+            not in out.groups
+        ):
+            out.createGroup(
+                "ObsError"
+            )
+
+        gerr = out.groups[
+            "ObsError"
+        ]
+
+        for varname, err in (
+            obs_errors.items()
+        ):
+
+            if (
+                "ObsValue"
+                not in out.groups
+            ):
+                continue
+
+            if (
+                varname
+                not in
+                out.groups[
+                    "ObsValue"
+                ].variables
+            ):
+                continue
+
+            v = gerr.createVariable(
+                varname,
+                np.float32,
+                ("Location",)
+            )
+
+            v[:] = np.full(
+                total_locations,
+                err,
+                dtype=np.float32
+            )
+
+            try:
+
+                v.units = (
+                    out.groups[
+                        "ObsValue"
+                    ]
+                    .variables[
+                        varname
+                    ]
+                    .units
+                )
+
+            except Exception:
+                pass
+
+            v.long_name = (
+                "observation error "
+                f"for {varname}"
+            )
+
+        out.close()
+
+        print(
+            "Created:",
+            outfile
+        )
+
+        current += cycle_step
+
+print()
+print("DONE")
