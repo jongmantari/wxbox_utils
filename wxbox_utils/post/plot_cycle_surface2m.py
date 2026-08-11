@@ -63,22 +63,31 @@ def load_yaml(filename):
 # PDF
 # =====================================================
 
+# =====================================================
+# PDF
+# =====================================================
+
 def build_pdf(
-
     png_files,
-
     output_pdf,
-
 ):
 
     import matplotlib.pyplot as plt
     import matplotlib.image as mpimg
 
-    with PdfPages(
-        output_pdf
-    ) as pdf:
+    with PdfPages(output_pdf) as pdf:
 
         for png in png_files:
+
+            png = Path(png)
+
+            if not png.exists():
+
+                print(
+                    f"[SKIP PDF] missing {png.name}"
+                )
+
+                continue
 
             fig = plt.figure(
                 figsize=(8.5, 11)
@@ -90,21 +99,31 @@ def build_pdf(
 
             ax.axis("off")
 
-            img = mpimg.imread(
-                png
-            )
+            try:
 
-            ax.imshow(
-                img
-            )
+                img = mpimg.imread(
+                    png
+                )
 
-            pdf.savefig(
-                fig,
-                bbox_inches="tight",
-            )
+                ax.imshow(
+                    img
+                )
 
-            plt.close(fig)
+                pdf.savefig(
+                    fig,
+                    bbox_inches="tight",
+                )
 
+            except Exception as e:
+
+                print(
+                    f"[SKIP PDF] "
+                    f"{png.name}: {e}"
+                )
+
+            finally:
+
+                plt.close(fig)
 
 # =====================================================
 # Main
@@ -626,20 +645,22 @@ def main(yaml_file):
         cycle,
     )
 
-    plot_density(
+    if len(obsval) >= 5:
 
-        density_png,
+        plot_density(
+            density_png,
+            ombg,
+            oman,
+            bandwidth,
+            points,
+            cycle,
+        )
 
-        ombg,
+    else:
 
-        oman,
-
-        bandwidth,
-
-        points,
-
-        cycle,
-    )
+        print(
+            f"[SKIP] density {cycle}"
+        )
 
     plot_summary_page(
 
