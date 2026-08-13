@@ -182,7 +182,19 @@ for obs_type in cfg["obs_types"]:
                 elev.units = 'm'
                 elev.long_name = 'station elevation above mean sea level'
 
-                elev[:] = gmeta.variables['height'][:] - 2.0
+                #elev[:] = gmeta.variables['height'][:] - 2.0
+
+                #=======
+                height = gmeta.variables['height'][:]
+
+                if obs_type.lower() == "grenade":
+
+                    elev[:] = 5.0 #height
+
+                else:
+
+                    elev[:] = height - 2.0                
+                #=======
 
                 print('Patched MetaData/stationElevation')
 

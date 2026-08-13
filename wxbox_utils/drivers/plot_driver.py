@@ -334,6 +334,17 @@ def check_cycle(
             ["grid_file"]
         )
 
+        orography = Path(
+            cfg["post"]
+            ["orography_file"]
+        )
+
+        print(
+            "OROGRAPHY =",
+            cfg["post"]["orography_file"]
+        )
+        
+
         if not background.exists():
             raise FileNotFoundError(
                 background
@@ -352,6 +363,11 @@ def check_cycle(
         if not grid.exists():
             raise FileNotFoundError(
                 grid
+            )
+        
+        if not orography.exists():
+            raise FileNotFoundError(
+                orography
             )
 
         print(
@@ -417,7 +433,12 @@ def render_cycle(
 
     template = env.get_template(
         "post_surface2m.yaml.j2"
-    )    
+    )
+
+    print(
+        "[TEMPLATE]",
+        template.filename,
+    )
     #==========================
 
     #==========================
@@ -441,6 +462,9 @@ def render_cycle(
 
         grid_file=
         cfg["post"]["grid_file"],
+
+        orography_file=
+        cfg["post"]["orography_file"],
 
         obsdiag_file=
         find_diag_file(
@@ -489,6 +513,7 @@ def render_cycle(
     )
     #==========================
 
+    print(cfg["post"]["orography_file"])
     outfile = (
         post_dir
         / "plot_surface2m.yaml"

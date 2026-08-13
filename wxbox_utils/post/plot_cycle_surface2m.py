@@ -172,6 +172,16 @@ def main(yaml_file):
         ["grid"]
     )
 
+    #oro_file = (
+    #    cfg["files"]
+    #    ["orography"]
+    #)
+
+    oro_file = (
+        "Data/inputs/lam_c1667/INPUT/"
+        "C1667_oro_data.tile7.halo3.nc"
+    )
+
     obsdiag_file = (
         cfg["files"]
         ["obsdiag"]
@@ -262,6 +272,28 @@ def main(yaml_file):
 
     grid = xr.open_dataset(
         grid_file
+    )
+
+    oro = xr.open_dataset(
+        oro_file
+    )
+
+    orog = oro[
+        "orog_filt"
+    ].values
+
+    orog_lon = oro[
+        "geolon"
+    ].values
+
+    orog_lat = oro[
+        "geolat"
+    ].values
+
+    orog_lon = np.where(
+        orog_lon > 180.0,
+        orog_lon - 360.0,
+        orog_lon,
     )
 
     meta = xr.open_dataset(
@@ -559,7 +591,13 @@ def main(yaml_file):
         variable,
 
         level,
-    )
+
+        orog=orog,
+
+        orog_lon=orog_lon,
+
+        orog_lat=orog_lat,
+    )    
 
     plot_analysis(
 
@@ -576,19 +614,25 @@ def main(yaml_file):
         variable,
 
         level,
+
+        orog=orog,
+
+        orog_lon=orog_lon,
+
+        orog_lat=orog_lat,
     )
 
     plot_increment(
-
         increment_png,
-
-        inc_map,
-
+        inc_interp,
+        lon,
+        lat,
         cycle,
-
         variable,
-
         level,
+        orog=orog,
+        orog_lon=orog_lon,
+        orog_lat=orog_lat,
     )
 
     plot_obs_map(
@@ -604,7 +648,17 @@ def main(yaml_file):
         cycle,
 
         "Observations",
-    )
+
+        lon,
+
+        lat,
+
+        orog=orog,
+
+        orog_lon=orog_lon,
+
+        orog_lat=orog_lat,
+    )    
 
     plot_innovation_map(
 
@@ -619,8 +673,18 @@ def main(yaml_file):
         cycle,
 
         "OMB",
-    )
 
+        lon,
+
+        lat,
+
+        orog=orog,
+
+        orog_lon=orog_lon,
+
+        orog_lat=orog_lat,
+    )    
+    
     plot_innovation_map(
 
         oma_png,
@@ -634,7 +698,17 @@ def main(yaml_file):
         cycle,
 
         "OMA",
-    )
+
+        lon,
+
+        lat,
+
+        orog=orog,
+
+        orog_lon=orog_lon,
+
+        orog_lat=orog_lat,
+    )    
 
     plot_vertical_profile(
 

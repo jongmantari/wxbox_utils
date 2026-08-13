@@ -41,6 +41,33 @@ from scipy.stats import gaussian_kde
 # Helpers
 # =====================================================
 
+def add_orography(
+    ax,
+    orog=None,
+    orog_lon=None,
+    orog_lat=None,
+    color="white",
+):
+
+    if (
+        orog is None
+        or orog_lon is None
+        or orog_lat is None
+    ):
+        return
+
+    ax.contour(
+        orog_lon,
+        orog_lat,
+        orog,
+        levels=[200,500,1000,1500],
+        colors=color,
+        linewidths=0.8,
+        alpha=0.8,
+        transform=ccrs.PlateCarree(),
+        zorder=20,
+    )
+
 def ensure_dir(path):
 
     Path(path).mkdir(
@@ -136,6 +163,12 @@ def plot_background(
 
     level,
 
+    orog=None,
+
+    orog_lon=None,
+
+    orog_lat=None,
+
 ):
 
     fig = plt.figure(
@@ -154,16 +187,22 @@ def plot_background(
     ax = setup_map(extent)
 
     h = ax.pcolormesh(
-
         lon,
         lat,
         field,
-
         shading="auto",
-
         cmap="viridis",
-
+        vmin=290.0,
+        vmax=325.0,
         transform=ccrs.PlateCarree(),
+    )    
+
+    add_orography(
+        ax,
+        orog,
+        orog_lon,
+        orog_lat,
+        color="white",
     )
 
     plt.title(
@@ -184,7 +223,6 @@ def plot_background(
 
     plt.close(fig)
 
-
 def plot_analysis(
 
     outfile,
@@ -200,6 +238,171 @@ def plot_analysis(
     variable,
 
     level,
+
+    orog=None,
+
+    orog_lon=None,
+
+    orog_lat=None,
+
+):
+
+    field = np.asarray(
+        field,
+        dtype=np.float64,
+    )
+
+    field[
+        np.abs(field) > 1.0e30
+    ] = np.nan
+
+    print(
+        "[ANALYSIS]",
+        np.nanmin(field),
+        np.nanmax(field),
+    )
+
+    print(
+        "[ANALYSIS FINITE]",
+        np.isfinite(field).sum(),
+        "/",
+        field.size,
+    )
+
+    fig = plt.figure(
+        figsize=(10, 7)
+    )
+
+    extent = [
+
+        float(np.nanmin(lon)),
+        float(np.nanmax(lon)),
+
+        float(np.nanmin(lat)),
+        float(np.nanmax(lat)),
+    ]
+
+    ax = setup_map(extent)
+
+    #
+    # Robust color scaling
+    #
+
+    vmin = np.nanpercentile(
+        field,
+        1,
+    )
+
+    vmax = np.nanpercentile(
+        field,
+        99,
+    )
+
+    #
+    # Prevent degenerate color range
+    #
+
+    if abs(vmax - vmin) < 1.0e-6:
+
+        vmin -= 1.0
+        vmax += 1.0
+
+    h = ax.pcolormesh(
+
+        lon,
+
+        lat,
+
+        field,
+
+        shading="auto",
+
+        cmap="viridis",
+
+        vmin=290.0,
+
+        vmax=325.0,
+
+        transform=ccrs.PlateCarree(),
+    )
+
+    
+
+    #
+    # 200 m terrain contour
+    #
+
+    if (
+        orog is not None
+        and
+        orog_lon is not None
+        and
+        orog_lat is not None
+    ):
+
+        ax.contour(
+
+            orog_lon,
+
+            orog_lat,
+
+            orog,
+
+            levels=[200,500,1000,1500],
+
+            colors="white",
+
+            linewidths=0.8,
+
+            alpha=0.8,
+
+            transform=ccrs.PlateCarree(),
+
+            zorder=20,
+        )
+
+    plt.title(
+
+        f"Analysis {variable} "
+        f"Level={level}\n"
+        f"{cycle}"
+    )
+
+    add_cbar(
+        h,
+        variable,
+    )
+
+    fig.savefig(
+
+        outfile,
+
+        bbox_inches="tight",
+    )
+
+    plt.close(fig)
+
+def plot_increment(
+
+    outfile,
+
+    increment,
+
+    lon,
+
+    lat,
+
+    cycle,
+
+    variable,
+
+    level,
+
+    orog=None,
+
+    orog_lon=None,
+
+    orog_lat=None,
 
 ):
 
@@ -218,73 +421,36 @@ def plot_analysis(
 
     ax = setup_map(extent)
 
-    h = ax.pcolormesh(
-
-        lon,
-        lat,
-        field,
-
-        shading="auto",
-
-        cmap="viridis",
-
-        transform=ccrs.PlateCarree(),
-    )
-
-    plt.title(
-        f"Analysis {variable} "
-        f"Level={level}\n"
-        f"{cycle}"
-    )
-
-    add_cbar(
-        h,
-        variable,
-    )
-
-    fig.savefig(
-        outfile,
-        bbox_inches="tight",
-    )
-
-    plt.close(fig)
-
-
-def plot_increment(
-
-    outfile,
-
-    increment,
-
-    cycle,
-
-    variable,
-
-    level,
-
-):
-
-    fig = plt.figure(
-        figsize=(10, 7)
-    )
-
     vmax = vmax99(
         increment
     )
 
-    plt.imshow(
+    h = ax.pcolormesh(
+
+        lon,
+
+        lat,
 
         increment,
 
+        shading="auto",
+
         cmap="RdBu_r",
 
-        vmin=-vmax,
-        vmax=vmax,
+        vmin=-20.0,
 
-        origin="lower",
+        vmax=20.0,
+
+        transform=ccrs.PlateCarree(),
     )
 
-    plt.colorbar()
+    add_orography(
+        ax,
+        orog,
+        orog_lon,
+        orog_lat,
+        color="black",
+    )
 
     plt.title(
         f"Increment {variable} "
@@ -292,13 +458,17 @@ def plot_increment(
         f"{cycle}"
     )
 
+    add_cbar(
+        h,
+        "Increment",
+    )
+
     fig.savefig(
         outfile,
         bbox_inches="tight",
     )
 
     plt.close(fig)
-
 
 # =====================================================
 # Observation Maps
@@ -318,19 +488,33 @@ def plot_obs_map(
 
     title,
 
+    domain_lon,
+
+    domain_lat,
+
+    orog=None,
+
+    orog_lon=None,
+
+    orog_lat=None,
+
 ):
 
     fig = plt.figure(
         figsize=(10, 7)
     )
 
+    #
+    # Use model domain extent
+    #
+
     extent = [
 
-        float(np.nanmin(lon)),
-        float(np.nanmax(lon)),
+        float(np.nanmin(domain_lon)),
+        float(np.nanmax(domain_lon)),
 
-        float(np.nanmin(lat)),
-        float(np.nanmax(lat)),
+        float(np.nanmin(domain_lat)),
+        float(np.nanmax(domain_lat)),
     ]
 
     ax = setup_map(extent)
@@ -344,9 +528,23 @@ def plot_obs_map(
 
         cmap="viridis",
 
-        s=80,
+        s=250,
+
+        vmin=285.0,
+
+        vmax=315.0,
 
         transform=ccrs.PlateCarree(),
+
+        zorder=30,
+    )
+
+    add_orography(
+        ax,
+        orog,
+        orog_lon,
+        orog_lat,
+        color="black",
     )
 
     plt.title(
@@ -364,8 +562,7 @@ def plot_obs_map(
     )
 
     plt.close(fig)
-
-
+    
 def plot_innovation_map(
 
     outfile,
@@ -380,6 +577,16 @@ def plot_innovation_map(
 
     title,
 
+    domain_lon,
+
+    domain_lat,
+
+    orog=None,
+
+    orog_lon=None,
+
+    orog_lat=None,
+
 ):
 
     innovation = np.asarray(
@@ -392,11 +599,13 @@ def plot_innovation_map(
     ] = np.nan
 
     mask = (
+
         np.isfinite(lon)
         &
         np.isfinite(lat)
         &
         np.isfinite(innovation)
+
     )
 
     lon = lon[mask]
@@ -405,42 +614,58 @@ def plot_innovation_map(
 
     if len(innovation) == 0:
         return
-    
+
     fig = plt.figure(
         figsize=(10, 7)
     )
 
+    #
+    # Use FV3 domain extent
+    #
+
     extent = [
 
-        float(np.nanmin(lon)),
-        float(np.nanmax(lon)),
+        float(np.nanmin(domain_lon)),
+        float(np.nanmax(domain_lon)),
 
-        float(np.nanmin(lat)),
-        float(np.nanmax(lat)),
+        float(np.nanmin(domain_lat)),
+        float(np.nanmax(domain_lat)),
     ]
 
     ax = setup_map(extent)
 
-    vmax = max(
-        vmax99(innovation),
-        0.1,
-    )
-
     sc = ax.scatter(
 
         lon,
+
         lat,
 
         c=innovation,
 
         cmap="RdBu_r",
 
-        s=90,
+        s=250,
 
-        vmin=-vmax,
-        vmax=vmax,
+        vmin=-15.0,
+
+        vmax=15.0,
 
         transform=ccrs.PlateCarree(),
+
+        zorder=30,
+    )
+
+    add_orography(
+
+        ax,
+
+        orog,
+
+        orog_lon,
+
+        orog_lat,
+
+        color="black",
     )
 
     plt.title(
@@ -453,13 +678,14 @@ def plot_innovation_map(
     )
 
     fig.savefig(
+
         outfile,
+
         bbox_inches="tight",
     )
 
     plt.close(fig)
-
-
+    
 # =====================================================
 # Vertical Profile
 # =====================================================
